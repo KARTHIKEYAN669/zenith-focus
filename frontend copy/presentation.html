@@ -1,0 +1,2715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus AI – Presentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600;700;900&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6c63ff;
+      --cyan: #00e5ff;
+      --green: #00ff9a;
+      --red: #ff4b6e;
+      --gold: #ffd166;
+      --bg: #030712;
+      --glass: rgba(13, 17, 23, 0.7);
+      --border: rgba(255, 255, 255, 0.1);
+      --hex-color: rgba(108, 99, 255, 0.05);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ─── particle canvas ─── */
+    #particle-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ─── slide container ─── */
+    #slide-container {
+      position: relative;
+      z-index: 2;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      /* Force layout removal */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
+      transform: translateX(100px) scale(0.95);
+      padding: 20px;
+      z-index: 1;
+      width: 100vw;
+      box-sizing: border-box;
+    }
+
+    .slide.active,
+    .slide.exit {
+      display: flex;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: all;
+      transform: translateX(0) scale(1);
+      z-index: 2;
+    }
+
+    .slide.exit {
+      transform: translateX(-100px) scale(0.95);
+      opacity: 0;
+      visibility: visible;
+      z-index: 1;
+    }
+
+    /* ─── Global HUD Frame ─── */
+    #hud-frame {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      pointer-events: none;
+      border: 1px solid rgba(0, 229, 255, 0.1);
+      box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.8);
+    }
+
+    .hud-corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--cyan);
+      opacity: 0.5;
+    }
+
+    .c-tl {
+      top: 20px;
+      left: 20px;
+      border-right: 0;
+      border-bottom: 0;
+    }
+
+    .c-tr {
+      top: 20px;
+      right: 20px;
+      border-left: 0;
+      border-bottom: 0;
+    }
+
+    .c-bl {
+      bottom: 20px;
+      left: 20px;
+      border-right: 0;
+      border-top: 0;
+    }
+
+    .c-br {
+      bottom: 20px;
+      right: 20px;
+      border-left: 0;
+      border-top: 0;
+    }
+
+    #hud-top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background: linear-gradient(to bottom, rgba(13, 17, 23, 0.9), transparent);
+      z-index: 95;
+      display: flex;
+      align-items: center;
+      padding: 0 60px;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 2px;
+    }
+
+    #hud-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 40px;
+      background: linear-gradient(to top, rgba(13, 17, 23, 0.9), transparent);
+      z-index: 95;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 60px;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.3);
+      letter-spacing: 2px;
+    }
+
+    /* ─── progress bar ─── */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--cyan), var(--green));
+      z-index: 100;
+      transition: width 0.5s ease;
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    /* ─── slide counter ─── */
+    #slide-counter {
+      position: fixed;
+      bottom: 30px;
+      right: 40px;
+      z-index: 100;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 2px;
+    }
+
+    /* ─── nav dots ─── */
+    #nav-dots {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: var(--primary);
+      transform: scale(1.4);
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    /* ─── nav buttons ─── */
+    #nav-prev,
+    #nav-next {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: white;
+      font-size: 1.5rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    #nav-prev:hover,
+    #nav-next:hover {
+      background: rgba(108, 99, 255, 0.3);
+      border-color: var(--primary);
+    }
+
+    #nav-prev {
+      left: 20px;
+    }
+
+    #nav-next {
+      right: 20px;
+    }
+
+    /* ─── auto-play toggle ─── */
+    #autoplay-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: white;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.8rem;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      letter-spacing: 1px;
+      transition: all 0.3s;
+    }
+
+    #autoplay-btn:hover {
+      border-color: var(--primary);
+      background: rgba(108, 99, 255, 0.2);
+    }
+
+    /* ─── timer ring ─── */
+    #timer-ring {
+      position: fixed;
+      top: 14px;
+      right: 140px;
+      z-index: 100;
+    }
+
+    #timer-ring svg {
+      width: 36px;
+      height: 36px;
+      transform: rotate(-90deg);
+    }
+
+    #timer-ring .ring-bg {
+      stroke: rgba(255, 255, 255, 0.1);
+      fill: none;
+      stroke-width: 3;
+    }
+
+    #timer-ring .ring-prog {
+      stroke: var(--cyan);
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.5s linear;
+    }
+
+    /* ────── SLIDE CONTENT STYLES ────── */
+
+    /* ── SLIDE 1: Title ── */
+    .slide-title .logo-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.8rem;
+      letter-spacing: 4px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 30px;
+    }
+
+    .slide-title .logo-badge .dot-live {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green);
+      animation: pulseLive 1.5s infinite;
+    }
+
+    @keyframes pulseLive {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(1.5);
+      }
+    }
+
+    .slide-title h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: fadeUp 1s ease both;
+    }
+
+    .slide-title .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.55);
+      text-align: center;
+      margin-top: 20px;
+      letter-spacing: 1px;
+      animation: fadeUp 1s 0.3s ease both;
+    }
+
+    .slide-title .author-badge {
+      margin-top: 50px;
+      padding: 12px 30px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      backdrop-filter: blur(20px);
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.6);
+      letter-spacing: 2px;
+      animation: fadeUp 1s 0.6s ease both;
+    }
+
+    .slide-title .tech-tags {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 30px;
+      animation: fadeUp 1s 0.9s ease both;
+    }
+
+    .tech-tag {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .tag-py {
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+    }
+
+    .tag-ai {
+      background: rgba(108, 99, 255, 0.15);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .tag-fl {
+      background: rgba(0, 255, 154, 0.1);
+      border: 1px solid var(--green);
+      color: var(--green);
+    }
+
+    .tag-ml {
+      background: rgba(255, 209, 102, 0.1);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+
+    /* ── SLIDE 2: Problem Statement ── */
+    .slide-problem .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .slide-problem h2 {
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+      line-height: 1.2;
+    }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .problem-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 20px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      transition: transform 0.3s;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .problem-card:hover {
+      transform: translateY(-6px);
+    }
+
+    .problem-card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 14px;
+    }
+
+    .problem-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .problem-card p {
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.5;
+    }
+
+    .stat-highlight {
+      font-size: 2.5rem;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .sh-red {
+      color: var(--red);
+      text-shadow: 0 0 20px rgba(255, 75, 110, 0.5);
+    }
+
+    .sh-gold {
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(255, 209, 102, 0.5);
+    }
+
+    .sh-cyan {
+      color: var(--cyan);
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+    }
+
+    /* ── SLIDE 3: System Overview ── */
+    .slide-overview .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .slide-overview h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .architecture-flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      max-width: 960px;
+      width: 100%;
+    }
+
+    .arch-node {
+      flex: 1;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 16px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      animation: fadeUp 0.7s ease both;
+    }
+
+    .arch-node .n-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .arch-node h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .arch-node p {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.45);
+      line-height: 1.4;
+    }
+
+    .arch-arrow {
+      color: var(--primary);
+      font-size: 1.5rem;
+      padding: 0 8px;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    .node-primary {
+      border-color: rgba(108, 99, 255, 0.4);
+      box-shadow: 0 0 20px rgba(108, 99, 255, 0.15);
+    }
+
+    .node-cyan {
+      border-color: rgba(0, 229, 255, 0.4);
+      box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+    }
+
+    .node-green {
+      border-color: rgba(0, 255, 154, 0.4);
+      box-shadow: 0 0 20px rgba(0, 255, 154, 0.15);
+    }
+
+    .feature-chips {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .feature-chip {
+      padding: 8px 20px;
+      background: rgba(108, 99, 255, 0.12);
+      border: 1px solid rgba(108, 99, 255, 0.3);
+      border-radius: 30px;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.8);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── SLIDE 4: Burnout Guardian ── */
+    .slide-burnout .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .slide-burnout h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .burnout-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .burnout-panel {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      backdrop-filter: blur(20px);
+    }
+
+    .burnout-panel h4 {
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 20px;
+    }
+
+    .metric-row-p {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .metric-label {
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .metric-value {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .mv-good {
+      color: var(--green);
+    }
+
+    .mv-warn {
+      color: var(--gold);
+    }
+
+    .mv-bad {
+      color: var(--red);
+    }
+
+    .metric-bar-wrap {
+      margin-bottom: 16px;
+    }
+
+    .metric-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 6px;
+    }
+
+    .metric-bar-bg {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .metric-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 1.5s ease;
+    }
+
+    .bar-focus {
+      background: linear-gradient(90deg, #6c63ff, #00e5ff);
+    }
+
+    .bar-burnout {
+      background: linear-gradient(90deg, #3b82f6, #ef4444);
+    }
+
+    .bar-steps {
+      background: linear-gradient(90deg, #10b981, #3b82f6);
+    }
+
+    .risk-badge {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .rb-low {
+      background: rgba(0, 255, 154, 0.15);
+      border: 1px solid var(--green);
+      color: var(--green);
+    }
+
+    .rb-mod {
+      background: rgba(255, 209, 102, 0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+
+    .rb-high {
+      background: rgba(255, 75, 110, 0.15);
+      border: 1px solid var(--red);
+      color: var(--red);
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(108, 99, 255, 0.08);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font-size: 0.83rem;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .suggestion-item .s-icon {
+      font-size: 1.1rem;
+    }
+
+    /* ── SLIDE 5: Nexus AI Chat ── */
+    .slide-chat .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .slide-chat h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .chat-demo-layout {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 24px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .chat-window {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+    }
+
+    .chat-header-demo {
+      padding: 14px 20px;
+      background: rgba(108, 99, 255, 0.15);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .status-dot-green {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulseLive 2s infinite;
+    }
+
+    .chat-messages {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg-bubble {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.4), rgba(0, 229, 255, 0.2));
+      border: 1px solid rgba(108, 99, 255, 0.3);
+    }
+
+    .msg-bot {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+    }
+
+    .msg-lang {
+      font-size: 0.68rem;
+      color: rgba(255, 255, 255, 0.35);
+      margin-top: 4px;
+    }
+
+    .chat-features-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+    }
+
+    .cf-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .cf-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .cf-desc {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.45);
+      line-height: 1.4;
+    }
+
+    /* ── SLIDE 6: ML Models ── */
+    .slide-ml .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .slide-ml h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .model-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .model-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 20px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s;
+    }
+
+    .model-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .mc-1::before {
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+    }
+
+    .mc-2::before {
+      background: linear-gradient(90deg, var(--red), var(--gold));
+    }
+
+    .mc-3::before {
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+    }
+
+    .model-card:hover {
+      transform: translateY(-6px);
+    }
+
+    .model-card .m-icon {
+      font-size: 2.8rem;
+      margin-bottom: 14px;
+    }
+
+    .model-card h3 {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .model-card .m-type {
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.35);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .accuracy-ring {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 12px;
+      position: relative;
+    }
+
+    .accuracy-ring svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .ar-bg {
+      stroke: rgba(255, 255, 255, 0.06);
+      fill: none;
+      stroke-width: 4;
+    }
+
+    .ar-fill {
+      fill: none;
+      stroke-width: 4;
+      stroke-linecap: round;
+    }
+
+    .ar-1 {
+      stroke: var(--primary);
+    }
+
+    .ar-2 {
+      stroke: var(--gold);
+    }
+
+    .ar-3 {
+      stroke: var(--green);
+    }
+
+    .ring-pct {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .model-card p {
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.45);
+      line-height: 1.5;
+    }
+
+    /* ── SLIDE 7: Multilingual ── */
+    .slide-lang .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--green);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .slide-lang h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .lang-demo-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .lang-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 20px;
+      text-align: center;
+      backdrop-filter: blur(20px);
+      transition: transform 0.3s;
+    }
+
+    .lang-card:hover {
+      transform: translateY(-6px);
+    }
+
+    .lang-card .flag {
+      font-size: 3rem;
+      margin-bottom: 14px;
+    }
+
+    .lang-card h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .lang-card .native {
+      font-size: 1.5rem;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 16px;
+    }
+
+    .lang-card .sample-text {
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.55);
+      line-height: 1.6;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .lang-active {
+      border-color: rgba(108, 99, 255, 0.5);
+      box-shadow: 0 0 30px rgba(108, 99, 255, 0.2);
+    }
+
+    .bilingual-showcase {
+      max-width: 700px;
+      width: 100%;
+      margin-top: 24px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      backdrop-filter: blur(20px);
+    }
+
+    .bi-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+      align-items: flex-start;
+    }
+
+    .bi-en {
+      flex: 1;
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .bi-divider {
+      width: 1px;
+      background: var(--border);
+    }
+
+    .bi-ta {
+      flex: 1;
+      font-size: 0.82rem;
+      color: rgba(0, 229, 255, 0.7);
+    }
+
+    /* ── SLIDE 8: Live Dashboard ── */
+    .slide-dashboard .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .slide-dashboard h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .dashboard-preview {
+      max-width: 900px;
+      width: 100%;
+      background: rgba(3, 7, 18, 0.8);
+      border: 1px solid rgba(108, 99, 255, 0.3);
+      border-radius: 20px;
+      overflow: hidden;
+      backdrop-filter: blur(30px);
+      box-shadow: 0 0 60px rgba(108, 99, 255, 0.2);
+    }
+
+    .dash-topbar {
+      background: rgba(108, 99, 255, 0.1);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dash-topbar .d-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .dash-topbar .d-lang-pills {
+      display: flex;
+      gap: 6px;
+    }
+
+    .d-pill {
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .d-pill.active-pill {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(108, 99, 255, 0.15);
+    }
+
+    .dash-body {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+    }
+
+    .dash-sidebar {
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .dash-widget {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .dw-title {
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .dw-val {
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .dv-good {
+      color: var(--green);
+    }
+
+    .dv-warn {
+      color: var(--gold);
+    }
+
+    .mini-bar-bg {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 2px;
+      margin-top: 8px;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    .dash-chat-area {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .d-msg-u {
+      align-self: flex-end;
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.3), rgba(0, 229, 255, 0.1));
+      border: 1px solid rgba(108, 99, 255, 0.2);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      max-width: 70%;
+    }
+
+    .d-msg-b {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      max-width: 85%;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .d-input-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px 0;
+      border-top: 1px solid var(--border);
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ── SLIDE 9: Thank You ── */
+    .slide-thanks h1 {
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 900;
+      text-align: center;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 50%, var(--green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeUp 1s ease both;
+    }
+
+    .slide-thanks .tagline {
+      font-size: clamp(0.9rem, 2vw, 1.2rem);
+      color: rgba(255, 255, 255, 0.45);
+      text-align: center;
+      margin-top: 16px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      animation: fadeUp 1s 0.3s ease both;
+    }
+
+    .contact-grid {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 50px;
+      animation: fadeUp 1s 0.6s ease both;
+    }
+
+    .contact-item {
+      padding: 14px 24px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(20px);
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.65);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .final-hud {
+      display: flex;
+      gap: 30px;
+      margin-top: 50px;
+      animation: fadeUp 1s 0.9s ease both;
+    }
+
+    .fh-item {
+      text-align: center;
+    }
+
+    .fh-num {
+      font-size: 2.5rem;
+      font-weight: 900;
+    }
+
+    .fh-label {
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .fn-purple {
+      color: var(--primary);
+      text-shadow: 0 0 20px rgba(108, 99, 255, 0.5);
+    }
+
+    .fn-cyan {
+      color: var(--cyan);
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+    }
+
+    .fn-green {
+      color: var(--green);
+      text-shadow: 0 0 20px rgba(0, 255, 154, 0.5);
+    }
+
+    /* ── animations ── */
+    /* ── premium animation scoping ── */
+    .slide:not(.active) .anim-1,
+    .slide:not(.active) .anim-2,
+    .slide:not(.active) .anim-3,
+    .slide:not(.active) .anim-4,
+    .slide:not(.active) .anim-5,
+    .slide:not(.active) h1,
+    .slide:not(.active) h2,
+    .slide:not(.active) p,
+    .slide:not(.active) .logo-badge,
+    .slide:not(.active) .author-badge,
+    .slide:not(.active) .tech-tags {
+      opacity: 0 !important;
+      animation: none !important;
+      visibility: hidden !important;
+    }
+
+    .slide.active .anim-1,
+    .slide.active .anim-2,
+    .slide.active .anim-3,
+    .slide.active .anim-4,
+    .slide.active .anim-5,
+    .slide.active h1,
+    .slide.active h2,
+    .slide.active p,
+    .slide.active .logo-badge,
+    .slide.active .author-badge,
+    .slide.active .tech-tags {
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* ── vignette ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes cyberGlitch {
+      0% {
+        text-shadow: 2px 2px var(--cyan), -2px -2px var(--primary);
+        transform: skew(0);
+      }
+
+      2% {
+        text-shadow: -3px 0 var(--red), 3px 0 var(--cyan);
+        transform: skew(0.5deg);
+      }
+
+      4% {
+        text-shadow: 2px 0 var(--cyan), -2px 0 var(--red);
+        transform: skew(-0.5deg);
+      }
+
+      6% {
+        text-shadow: 2px 2px var(--cyan), -2px -2px var(--primary);
+        transform: skew(0);
+      }
+
+      100% {
+        text-shadow: 2px 2px var(--cyan), -2px -2px var(--primary);
+        transform: skew(0);
+      }
+    }
+
+    .cyber-title {
+      animation: cyberGlitch 5s infinite;
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+    }
+
+    @keyframes pulseRisk {
+
+      0%,
+      100% {
+        box-shadow: 0 0 10px var(--red), inset 0 0 10px var(--red);
+        opacity: 1;
+      }
+
+      50% {
+        box-shadow: 0 0 30px var(--red), inset 0 0 20px var(--red);
+        opacity: 0.8;
+      }
+    }
+
+    .pulse-risk {
+      animation: pulseRisk 1.5s infinite;
+    }
+
+    @keyframes scanMove {
+      0% {
+        top: 0%;
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 0.8;
+      }
+
+      90% {
+        opacity: 0.8;
+      }
+
+      100% {
+        top: 100%;
+        opacity: 0;
+      }
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      z-index: 10;
+      pointer-events: none;
+      animation: scanMove 4s infinite linear;
+    }
+
+    @keyframes rotateInner {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes rotateOuter {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(-360deg);
+      }
+    }
+
+    .hud-ring-outer {
+      position: absolute;
+      inset: -10px;
+      border: 1px dashed rgba(0, 229, 255, 0.3);
+      border-radius: 50%;
+      animation: rotateInner 12s infinite linear;
+      pointer-events: none;
+    }
+
+    .hud-ring-inner {
+      position: absolute;
+      inset: -5px;
+      border: 1px solid rgba(108, 99, 255, 0.15);
+      border-radius: 50%;
+      animation: rotateOuter 8s infinite linear;
+      pointer-events: none;
+    }
+
+    @keyframes pulseWave {
+      0% {
+        transform: scaleY(1);
+        opacity: 0.3;
+      }
+
+      50% {
+        transform: scaleY(2.5);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scaleY(1);
+        opacity: 0.3;
+      }
+    }
+
+    .wave-container {
+      display: flex;
+      gap: 3px;
+      height: 30px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .wave-bar {
+      width: 2px;
+      height: 100%;
+      background: var(--cyan);
+      border-radius: 1px;
+      animation: pulseWave 1s infinite ease-in-out;
+    }
+
+    .glow-text {
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    .data-packet {
+      transform: translateX(-20px);
+      opacity: 0;
+      transition: all 0.5s;
+    }
+
+    .slide.active .data-packet {
+      transform: translateX(0);
+      opacity: 1;
+      transition-delay: calc(var(--i) * 0.2s);
+    }
+
+    /* ── HUD scanning ring ── */
+    .hud-scan-ring {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .hud-scan-ring::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      border-radius: 50%;
+      border: 1px solid rgba(108, 99, 255, 0.08);
+    }
+
+    /* ── grid overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='100' height='173.2' viewBox='0 0 100 173.2' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0 L75 0 L100 43.3 L100 129.9 L75 173.2 L25 173.2 L0 129.9 L0 43.3 Z' fill='none' stroke='rgba(108,99,255,0.04)' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 50px 86.6px;
+      opacity: 0.8;
+    }
+
+    /* ── global scanline sweep ── */
+    @keyframes sweep {
+      0% {
+        transform: translateY(-100vh);
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 0.3;
+      }
+
+      90% {
+        opacity: 0.3;
+      }
+
+      100% {
+        transform: translateY(100vh);
+        opacity: 0;
+      }
+    }
+
+    .scan-sweep {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background: linear-gradient(to bottom, transparent, rgba(0, 229, 255, 0.05), transparent);
+      z-index: 1000;
+      pointer-events: none;
+      animation: sweep 8s infinite linear;
+    }
+
+    .glass-panel {
+      position: relative;
+      background: var(--glass);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .glass-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+      pointer-events: none;
+    }
+
+    @keyframes borderGlow {
+
+      0%,
+      100% {
+        border-color: rgba(108, 99, 255, 0.2);
+        box-shadow: 0 0 15px rgba(108, 99, 255, 0.05);
+      }
+
+      50% {
+        border-color: rgba(0, 229, 255, 0.4);
+        box-shadow: 0 0 30px rgba(0, 229, 255, 0.15);
+      }
+    }
+
+    .glow-card {
+      animation: borderGlow 4s infinite alternate;
+    }
+
+    /* ── slide-in animation classes ── */
+    .anim-1 {
+      animation-delay: 0.1s;
+    }
+
+    .anim-2 {
+      animation-delay: 0.25s;
+    }
+
+    .anim-3 {
+      animation-delay: 0.4s;
+    }
+
+    .anim-4 {
+      animation-delay: 0.55s;
+    }
+
+    .anim-5 {
+      animation-delay: 0.7s;
+    }
+
+    /* ── section divider ── */
+    .section-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      border-radius: 1px;
+      margin-bottom: 20px;
+    }
+
+    /* ── responsive ── */
+    @media (max-width: 800px) {
+
+      /* Hide global HUD to give space */
+      #hud-frame,
+      #hud-top-bar,
+      #hud-bottom-bar,
+      .scan-sweep {
+        display: none !important;
+      }
+
+      .slide {
+        padding: 60px 15px 40px 15px;
+        /* space for top/bottom fixed controls */
+      }
+
+      /* Make font sizes smaller/scaled */
+      .slide h1 {
+        font-size: clamp(2rem, 8vw, 3rem);
+      }
+
+      .slide h2 {
+        font-size: clamp(1.5rem, 6vw, 2.2rem);
+        margin-bottom: 20px;
+      }
+
+      /* Collapse Grids */
+      .problem-grid,
+      .model-grid,
+      .lang-demo-layout,
+      .burnout-layout,
+      .chat-demo-layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      /* Fix Architecture Flow */
+      .architecture-flow {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .arch-arrow {
+        transform: rotate(90deg);
+        padding: 5px 0;
+      }
+
+      /* Fix Live Dashboard */
+      .dash-body {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-preview {
+        max-height: 55vh;
+        overflow-y: auto;
+      }
+
+      /* Adjust Final HUD metrics */
+      .final-hud {
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 30px;
+      }
+
+      .fh-num {
+        font-size: 2rem;
+      }
+
+      .contact-grid {
+        margin-top: 30px;
+      }
+
+      .contact-item {
+        padding: 10px 15px;
+        font-size: 0.75rem;
+      }
+
+      /* Adjust Nav and Controls Position */
+      #nav-prev {
+        left: 10px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+      }
+
+      #nav-next {
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+      }
+
+      #slide-counter {
+        bottom: 15px;
+        right: 20px;
+        font-size: 0.75rem;
+      }
+
+      #nav-dots {
+        bottom: 15px;
+      }
+
+      #autoplay-btn {
+        top: 10px;
+        right: 10px;
+        font-size: 0.7rem;
+        padding: 6px 12px;
+      }
+
+      #tts-btn {
+        top: 10px;
+        left: 10px;
+        right: auto;
+        padding: 6px 12px;
+        font-size: 0.7rem;
+      }
+
+      #timer-ring {
+        top: 6px;
+        right: 90px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Global HUD -->
+  <div id="hud-frame">
+    <div class="hud-corner c-tl"></div>
+    <div class="hud-corner c-tr"></div>
+    <div class="hud-corner c-bl"></div>
+    <div class="hud-corner c-br"></div>
+  </div>
+
+  <div id="hud-top-bar">
+    <span style="color:var(--cyan)">SYS.LINK_ESTABLISHED</span> &nbsp; | &nbsp;
+    <span id="hud-clock">00:00:00</span> &nbsp; | &nbsp;
+    <span style="color:var(--green)">LATENCY: 12ms</span>
+  </div>
+
+  <div id="hud-bottom-bar">
+    <span>NEXUS AI CORE v2.4.0</span>
+    <span style="color:rgba(255,255,255,0.1)">// SECURE_TERMINAL_ENCRYPTION_ACTIVE</span>
+    <span>SECTOR: 7-G</span>
+  </div>
+
+  <div class="hud-scan-ring"></div>
+  <div class="scan-sweep"></div>
+
+  <!-- Progress Bar -->
+  <div id="progress-bar"></div>
+
+  <!-- Timer Ring -->
+  <div id="timer-ring">
+    <svg viewBox="0 0 40 40">
+      <circle class="ring-bg" cx="20" cy="20" r="17" />
+      <circle class="ring-prog" id="timer-prog" cx="20" cy="20" r="17" stroke-dasharray="107" stroke-dashoffset="0" />
+    </svg>
+  </div>
+
+  <!-- Autoplay Button -->
+  <button id="autoplay-btn">⏸ PAUSE</button>
+
+  <!-- TTS Toggle Button -->
+  <button id="tts-btn" title="Toggle Narration" style="
+  position: fixed; top: 20px; right: 230px; z-index: 100;
+  background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.35);
+  color: #00e5ff; font-family: 'Outfit', sans-serif; font-size: 0.8rem;
+  padding: 8px 16px; border-radius: 20px; cursor: pointer;
+  backdrop-filter: blur(10px); letter-spacing: 1px; transition: all 0.3s;
+">🔊 NARRATE</button>
+
+  <!-- Speaking Indicator -->
+  <div id="tts-indicator" style="
+  position: fixed; top: 60px; right: 20px; z-index: 100;
+  display: none; align-items: center; gap: 8px;
+  background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 20px; padding: 6px 14px; font-size: 0.72rem;
+  color: rgba(0,229,255,0.8); letter-spacing: 1px;
+">
+    <span style="display:flex;gap:3px;align-items:center;">
+      <span class="tts-bar"
+        style="width:3px;background:#00e5ff;border-radius:2px;animation:ttsBar 0.8s 0s infinite alternate;"></span>
+      <span class="tts-bar"
+        style="width:3px;background:#00e5ff;border-radius:2px;animation:ttsBar 0.8s 0.15s infinite alternate;"></span>
+      <span class="tts-bar"
+        style="width:3px;background:#00e5ff;border-radius:2px;animation:ttsBar 0.8s 0.3s infinite alternate;"></span>
+      <span class="tts-bar"
+        style="width:3px;background:#00e5ff;border-radius:2px;animation:ttsBar 0.8s 0.45s infinite alternate;"></span>
+    </span>
+    NARRATING
+  </div>
+
+  <!-- Nav buttons -->
+  <button id="nav-prev">‹</button>
+  <button id="nav-next">›</button>
+
+  <!-- Slide Counter -->
+  <div id="slide-counter">01 / 08</div>
+
+  <!-- Nav dots -->
+  <div id="nav-dots"></div>
+
+  <!-- Slides -->
+  <div id="slide-container">
+
+    <!-- ═══ SLIDE 1: Title ═══ -->
+    <div class="slide slide-title active" id="slide-0">
+      <div class="logo-badge">
+        <div class="dot-live"></div>
+        <span>AI PERSONAL HEALTH CARE ASSISTANT</span>
+      </div>
+      <h1 class="cyber-title">Nexus AI<br>Burnout & Focus Guardian</h1>
+      <p class="subtitle" style="display: flex; flex-direction: column; align-items: center;">
+        <span class="typing" style="--i:1;">An intelligent, bilingual health monitoring system powered by</span>
+        <span class="typing" style="--i:2; animation-delay: 3s;">machine learning, real-time data, and proactive AI
+          insights</span>
+      </p>
+      <div class="author-badge">KARTHIKEYAN &nbsp;·&nbsp; AI/ML PROJECT PRESENTATION &nbsp;·&nbsp; 2026</div>
+      <div class="tech-tags">
+        <span class="tech-tag tag-py">Python</span>
+        <span class="tech-tag tag-ai">GPT-4 / g4f</span>
+        <span class="tech-tag tag-fl">Flask</span>
+        <span class="tech-tag tag-ml">Scikit-Learn</span>
+        <span class="tech-tag tag-py">DuckDuckGo Search</span>
+        <span class="tech-tag tag-ai">Bilingual NLP</span>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 2: Problem Statement ═══ -->
+    <div class="slide slide-problem" id="slide-1">
+      <div class="section-label">⚠ The Problem</div>
+      <h2>Modern Workers Face a<br><span style="color:var(--red)">Silent Health Crisis</span></h2>
+      <div class="problem-grid">
+        <div class="problem-card anim-1">
+          <div class="stat-highlight sh-red">77%</div>
+          <div class="icon">🔥</div>
+          <h3>Experience Burnout</h3>
+          <p>of professionals report burnout at their current job, dramatically reducing productivity and wellbeing</p>
+        </div>
+        <div class="problem-card anim-2">
+          <div class="stat-highlight sh-gold">64%</div>
+          <div class="icon">😴</div>
+          <h3>Sleep-Deprived</h3>
+          <p>of knowledge workers sleep fewer than 7 hours on workdays, impairing cognitive function significantly</p>
+        </div>
+        <div class="problem-card anim-3">
+          <div class="stat-highlight sh-cyan">$1T</div>
+          <div class="icon">📉</div>
+          <h3>Annual Cost</h3>
+          <p>lost globally per year due to depression and anxiety — conditions directly linked to workplace burnout</p>
+        </div>
+      </div>
+      <div
+        style="margin-top:30px; text-align:center; font-size:0.9rem; color:rgba(255,255,255,0.4); max-width:700px; animation: fadeUp 0.8s 0.8s both;">
+        <strong style="color:rgba(255,255,255,0.7)">Nexus AI</strong> addresses this by providing real-time, AI-driven,
+        bilingual health monitoring —
+        detecting burnout risk before it escalates.
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 3: System Overview ═══ -->
+    <div class="slide slide-overview" id="slide-2">
+      <div class="section-label">🧠 System Architecture</div>
+      <h2>How <span style="color:var(--primary)">Nexus AI</span> Works</h2>
+      <div class="architecture-flow">
+        <div class="arch-node node-cyan anim-1">
+          <div class="n-icon">📊</div>
+          <h4>Data Collection</h4>
+          <p>Sleep, mood, steps, work hours, screen time from user tracker + wearables</p>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node node-primary anim-2">
+          <div class="n-icon">⚙️</div>
+          <h4>AI Processing</h4>
+          <p>Focus Guardian algorithm + GPT-4 LLM + Heart Disease ML Model (scikit-learn)</p>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-node node-green anim-3">
+          <div class="n-icon">🎯</div>
+          <h4>Actionable Output</h4>
+          <p>Bilingual suggestions, cinematic reports, voice alerts, proactive interventions</p>
+        </div>
+      </div>
+      <div class="feature-chips">
+        <span class="feature-chip">🌦️ Real-time Weather</span>
+        <span class="feature-chip">🚨 Disaster Alerts (GDACS)</span>
+        <span class="feature-chip">📈 Stock Market (Yahoo Finance)</span>
+        <span class="feature-chip">🫀 Heart Disease Prediction</span>
+        <span class="feature-chip">🗣️ Voice Interface</span>
+        <span class="feature-chip">📂 File Analysis</span>
+        <span class="feature-chip">📱 QR Multi-Device</span>
+        <span class="feature-chip">🔗 DuckDuckGo Search</span>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 4: Burnout Guardian ═══ -->
+    <div class="slide slide-burnout" id="slide-3">
+      <div class="section-label">🛡️ Feature 1</div>
+      <h2>Burnout & Focus <span style="color:var(--red)">Guardian System</span></h2>
+      <div class="burnout-layout">
+        <div class="burnout-panel glow-card" style="position: relative; overflow: hidden;">
+          <div class="scan-line"></div>
+          <h4>Live Health Metrics</h4>
+          <div class="metric-row-p">
+            <span class="metric-label">😴 Sleep</span>
+            <span class="metric-value mv-warn">6.5 hrs</span>
+          </div>
+          <div class="metric-row-p">
+            <span class="metric-label">💼 Work Hours</span>
+            <span class="metric-value mv-bad">10 hrs</span>
+          </div>
+          <div class="metric-row-p">
+            <span class="metric-label">📱 Screen Time</span>
+            <span class="metric-value mv-warn">8 hrs</span>
+          </div>
+          <div class="metric-row-p">
+            <span class="metric-label">😊 Mood</span>
+            <span class="metric-value mv-bad">Stressed</span>
+          </div>
+          <div style="margin-top:20px;">
+            <div class="metric-bar-wrap">
+              <div class="metric-bar-label"><span>Focus Score</span><span style="color:var(--primary)">55%</span></div>
+              <div class="metric-bar-bg">
+                <div class="metric-bar-fill bar-focus" style="width:55%"></div>
+              </div>
+            </div>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar-label"><span>Burnout Risk</span><span style="color:var(--red)">71%</span></div>
+              <div class="metric-bar-bg">
+                <div class="metric-bar-fill bar-burnout" style="width:71%"></div>
+              </div>
+            </div>
+            <div class="metric-bar-wrap">
+              <div class="metric-bar-label"><span>Steps</span><span>4,200/10k</span></div>
+              <div class="metric-bar-bg">
+                <div class="metric-bar-fill bar-steps" style="width:42%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="wave-container">
+            <div class="wave-bar" style="animation-delay: 0.1s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.2s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.3s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.4s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.5s;"></div>
+            <div class="wave-bar" style="animation-delay: 0.6s;"></div>
+            <span
+              style="font-size: 0.6rem; color: rgba(0, 229, 255, 0.5); margin-left: 10px; letter-spacing: 2px;">NEURAL
+              PULSE ACTIVE</span>
+          </div>
+        </div>
+        <div class="burnout-panel">
+          <h4>Jarvis Analysis</h4>
+          <div class="risk-badge rb-high pulse-risk">⚠ HIGH BURNOUT RISK</div>
+          <div class="suggestion-item data-packet" style="--i:1;">
+            <span class="s-icon">😴</span>
+            <span>Take a power nap / சிறிது நேரம் தூங்குங்கள்</span>
+          </div>
+          <div class="suggestion-item data-packet" style="--i:2;">
+            <span class="s-icon">🧘</span>
+            <span>Step away for 15m / 15 நிமிடம் ஓய்வு எடுங்கள்</span>
+          </div>
+          <div class="suggestion-item data-packet" style="--i:3;">
+            <span class="s-icon">💧</span>
+            <span>Hydrate & rest eyes / தண்ணீர் குடிக்கவும்</span>
+          </div>
+          <div
+            style="margin-top:20px; padding:14px; background:rgba(255,75,110,0.08); border:1px solid rgba(255,75,110,0.2); border-radius:12px; font-size:0.78rem; color:rgba(255,255,255,0.6); line-height:1.6;">
+            <strong style="color:var(--red)">Sir,</strong> your focus is critically low. I recommend stepping away from
+            the screen, rehydrating, and allowing your eyes to rest immediately.
+            <br><span style="color:rgba(0,229,255,0.6)">ஐயா, உங்கள் கவனம் மிகவும் குறைவாக உள்ளது. திரையிலிருந்து
+              விலகங்கள்.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══ SLIDE 5: ML Models ═══ -->
+    <div class="slide slide-ml" id="slide-4">
+      <div class="section-label">🤖 AI & ML Models</div>
+      <h2>Predictive Intelligence <span style="color:var(--gold)">Layer</span></h2>
+      <div class="model-grid">
+        <div class="model-card mc-1 anim-1">
+          <div class="m-icon">🛡️</div>
+          <h3>Focus Guardian</h3>
+          <div class="m-type">Rule-Based + GPT-4</div>
+          <div class="accuracy-ring">
+            <div class="hud-ring-outer"></div>
+            <div class="hud-ring-inner"></div>
+            <svg viewBox="0 0 40 40">
+              <circle class="ar-bg" cx="20" cy="20" r="17" />
+              <circle class="ar-fill ar-1" cx="20" cy="20" r="17" stroke-dasharray="107" stroke-dashoffset="13" />
+            </svg>
+            <div class="ring-pct" style="color:var(--primary)">88%</div>
+          </div>
+          <p>Burnout & focus score engine. Analyses sleep, work, mood, screen time with AI-generated bilingual recovery
+            suggestions</p>
+        </div>
+        <div class="model-card mc-2 anim-2">
+          <div class="m-icon">🫀</div>
+          <h3>Heart Disease</h3>
+          <div class="m-type">Scikit-Learn Classifier</div>
+          <div class="accuracy-ring">
+            <div class="hud-ring-outer" style="border-color: var(--gold); animation-delay: -2s;"></div>
+            <div class="hud-ring-inner" style="border-color: var(--gold); animation-delay: -1s;"></div>
+            <svg viewBox="0 0 40 40">
+              <circle class="ar-bg" cx="20" cy="20" r="17" />
+              <circle class="ar-fill ar-2" cx="20" cy="20" r="17" stroke-dasharray="107" stroke-dashoffset="10" />
+            </svg>
+            <div class="ring-pct" style="color:var(--gold)">91%</div>
+          </div>
+          <p>13-feature ML model trained on UCI Heart Disease dataset. Predicts cardiovascular risk with high accuracy
+          </p>
+        </div>
+        <div class="model-card mc-3 anim-3">
+          <div class="m-icon">🦠</div>
+          <h3>Disease Predictor</h3>
+          <div class="m-type">Symptom Matching NLP</div>
+          <div class="accuracy-ring">
+            <div class="hud-ring-outer" style="border-color: var(--green); animation-delay: -4s;"></div>
+            <div class="hud-ring-inner" style="border-color: var(--green); animation-delay: -2s;"></div>
+            <svg viewBox="0 0 40 40">
+              <circle class="ar-bg" cx="20" cy="20" r="17" />
+              <circle class="ar-fill ar-3" cx="20" cy="20" r="17" stroke-dasharray="107" stroke-dashoffset="18" />
+            </svg>
+            <div class="ring-pct" style="color:var(--green)">83%</div>
+          </div>
+          <p>Symptom-based detection for flu, COVID-19, malaria, typhoid, and dengue using natural language processing
+          </p>
+        </div>
+      </div>
+      <div style="margin-top:28px; display:flex; gap:20px; justify-content:center; animation: fadeUp 0.8s 0.8s both;">
+        <div
+          style="padding:14px 24px; background:var(--glass); border:1px solid var(--border); border-radius:14px; text-align:center; backdrop-filter:blur(20px);">
+          <div style="font-size:1.8rem; font-weight:900; color:var(--primary)">GPT-4</div>
+          <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); letter-spacing:2px;">LLM CORE</div>
+        </div>
+        <div
+          style="padding:14px 24px; background:var(--glass); border:1px solid var(--border); border-radius:14px; text-align:center; backdrop-filter:blur(20px);">
+          <div style="font-size:1.8rem; font-weight:900; color:var(--cyan)">g4f</div>
+          <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); letter-spacing:2px;">FREE API LAYER</div>
+        </div>
+        <div
+          style="padding:14px 24px; background:var(--glass); border:1px solid var(--border); border-radius:14px; text-align:center; backdrop-filter:blur(20px);">
+          <div style="font-size:1.8rem; font-weight:900; color:var(--green)">Flask</div>
+          <div style="font-size:0.72rem; color:rgba(255,255,255,0.35); letter-spacing:2px;">REST BACKEND</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 6: Multilingual ═══ -->
+    <div class="slide slide-lang" id="slide-5">
+      <div class="section-label">🌐 Bilingual Intelligence</div>
+      <h2>Speaking Your <span style="color:var(--green)">Language</span></h2>
+      <div class="lang-demo-layout">
+        <div class="lang-card anim-1">
+          <div class="flag">🇬🇧</div>
+          <h3>English</h3>
+          <div class="native">EN</div>
+          <div class="sample-text">
+            "Sir, your burnout risk is high. I recommend stepping away from the screen and resting your eyes
+            immediately."
+          </div>
+        </div>
+        <div class="lang-card lang-active anim-2">
+          <div class="flag">🇮🇳</div>
+          <h3>Tamil</h3>
+          <div class="native">தமிழ்</div>
+          <div class="sample-text" style="color:rgba(0,229,255,0.8);">
+            "ஐயா, உங்கள் சோர்வு அபாயம் அதிகமாக உள்ளது. திரையிலிருந்து விலகி கண்களுக்கு ஓய்வு கொடுங்கள்."
+          </div>
+        </div>
+        <div class="lang-card anim-3">
+          <div class="flag">🌐</div>
+          <h3>Bilingual</h3>
+          <div class="native">இருமொழி</div>
+          <div class="sample-text">
+            English response
+            <div style="border-top:1px solid rgba(255,255,255,0.1); margin:8px 0;"></div>
+            <span style="color:rgba(0,229,255,0.7);">தமிழ் பதில்</span>
+          </div>
+        </div>
+      </div>
+      <div class="bilingual-showcase">
+        <div style="font-size:0.7rem; letter-spacing:2px; color:rgba(255,255,255,0.3); margin-bottom:12px;">LIVE
+          BILINGUAL RESPONSE EXAMPLE</div>
+        <div class="bi-row">
+          <div class="bi-en">Weather in Chennai is 32°C with clear sky. It's warm — please stay hydrated and avoid
+            direct sun exposure.</div>
+          <div class="bi-divider"></div>
+          <div class="bi-ta">சென்னையில் வானிலை 32°C மற்றும் தெளிவான வானம். வெப்பமாக உள்ளது — போதுமான தண்ணீர் குடித்து
+            நிழலில் இருங்கள்.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 7: Live Dashboard ═══ -->
+    <div class="slide slide-dashboard" id="slide-6">
+      <div class="section-label">🖥️ The Product</div>
+      <h2>Jarvis-Style <span style="color:var(--primary)">Live Dashboard</span></h2>
+      <div class="dashboard-preview">
+        <div class="dash-topbar">
+          <div class="d-title">⚡ Nexus AI</div>
+          <div class="d-lang-pills">
+            <div class="d-pill">EN</div>
+            <div class="d-pill">TA</div>
+            <div class="d-pill active-pill">BI</div>
+          </div>
+          <div style="font-size:0.75rem; color:var(--green); display:flex;align-items:center;gap:6px;">
+            <div class="status-dot-green" style="width:6px;height:6px;"></div> ONLINE
+          </div>
+        </div>
+        <div class="dash-body">
+          <div class="dash-sidebar">
+            <div class="dash-widget">
+              <div class="dw-title">Focus Guardian</div>
+              <div class="dw-val dv-good">100%</div>
+              <div class="mini-bar-bg">
+                <div class="mini-bar-fill"
+                  style="width:100%;background:linear-gradient(90deg,#6c63ff,#00e5ff);height:100%;border-radius:2px;">
+                </div>
+              </div>
+            </div>
+            <div class="dash-widget">
+              <div class="dw-title">Burnout Risk</div>
+              <div class="dw-val dv-good" style="color:var(--green)">Low</div>
+              <div class="mini-bar-bg">
+                <div class="mini-bar-fill"
+                  style="width:15%;background:linear-gradient(90deg,#3b82f6,#ef4444);height:100%;border-radius:2px;">
+                </div>
+              </div>
+            </div>
+            <div class="dash-widget">
+              <div class="dw-title">Daily Tracker</div>
+              <div style="font-size:0.75rem; color:rgba(255,255,255,0.5); line-height:1.8;">
+                <div>Steps: <span style="color:#fff;">0 / 10,000</span></div>
+                <div>Mood: <span style="color:var(--green)">😊 Happy</span></div>
+                <div>Sleep: <span style="color:#fff;">8 hrs</span></div>
+              </div>
+            </div>
+            <div class="dash-widget" style="background:rgba(108,99,255,0.08);border-color:rgba(108,99,255,0.25);">
+              <div class="dw-title" style="color:var(--primary);">🎬 Launch Cinematic</div>
+              <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);">HUD Presentation Mode</div>
+            </div>
+          </div>
+          <div class="dash-chat-area">
+            <div class="d-msg-u">Hello Jarvis, what's my health status today?</div>
+            <div class="d-msg-b">
+              Good Morning! Your Focus Guardian is at 100% — you're in optimal productivity zone. No burnout risk
+              detected. Keep it up!
+              <div style="margin-top:5px;color:rgba(0,229,255,0.6);font-size:0.75rem;">--- காலை வணக்கம்! உங்கள் கவனம்
+                100% — சிறந்த நிலையில் உள்ளீர்கள். இப்படியே தொடருங்கள்!</div>
+            </div>
+            <div class="d-msg-u">What is the weather in Chennai?</div>
+            <div class="d-msg-b">
+              Weather in Chennai is 32°C with clear skies. ☀️ Stay hydrated!
+              <div style="margin-top:5px;color:rgba(0,229,255,0.6);font-size:0.75rem;">--- சென்னையில் வானிலை 32°C.
+                போதுமான தண்ணீர் குடிக்கவும்!</div>
+            </div>
+            <div class="d-input-bar">
+              🎙️ &nbsp; Message Nexus AI... &nbsp;&nbsp;
+              <span style="margin-left:auto;">📎 &nbsp; ➤</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SLIDE 8: Thank You ═══ -->
+    <div class="slide slide-thanks" id="slide-7">
+      <h1>Thank You</h1>
+      <p class="tagline">Building the future of AI-powered personal health care</p>
+      <div class="final-hud">
+        <div class="fh-item">
+          <div class="fh-num fn-purple">9+</div>
+          <div class="fh-label">API Integrations</div>
+        </div>
+        <div class="fh-item">
+          <div class="fh-num fn-cyan">3</div>
+          <div class="fh-label">ML Models</div>
+        </div>
+        <div class="fh-item">
+          <div class="fh-num fn-green">2</div>
+          <div class="fh-label">Languages</div>
+        </div>
+        <div class="fh-item">
+          <div class="fh-num" style="color:var(--gold)">∞</div>
+          <div class="fh-label">Possibilities</div>
+        </div>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-item">🎓 AI Personal Health Care Assistant</div>
+        <div class="contact-item">⚡ Powered by Nexus AI & Jarvis Engine</div>
+        <div class="contact-item">🌐 Bilingual: English + Tamil</div>
+      </div>
+      <div
+        style="margin-top:40px; font-size:0.8rem; color:rgba(255,255,255,0.2); letter-spacing:3px; animation: fadeUp 1s 1.2s both;">
+        NEXUS AI · BURNOUT & FOCUS GUARDIAN · 2026
+      </div>
+    </div>
+
+  </div><!-- /slide-container -->
+
+  <script>
+    // ─── Particle System ───
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function createParticle() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        r: Math.random() * 1.5 + 0.3,
+        alpha: Math.random() * 0.4 + 0.05,
+        color: Math.random() > 0.6 ? '#6c63ff' : Math.random() > 0.5 ? '#00e5ff' : '#fff'
+      };
+    }
+
+    for (let i = 0; i < 120; i++) particles.push(createParticle());
+
+    function animParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+
+      // Draw connecting lines
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = '#6c63ff';
+            ctx.globalAlpha = (1 - dist / 100) * 0.07;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+      requestAnimationFrame(animParticles);
+    }
+    animParticles();
+
+    // ─── Slide Controller ───
+    const slides = document.querySelectorAll('.slide');
+    const TOTAL_SLIDES = slides.length;
+    let currentSlide = 0;
+    let autoPlay = true;
+    let slideTimer = null;
+    let timerStart = null;
+    let timerAnimFrame = null;
+    let currentSlideDuration = 10000;
+
+    const progressBar = document.getElementById('progress-bar');
+    const slideCounter = document.getElementById('slide-counter');
+    const navDots = document.getElementById('nav-dots');
+    const timerProg = document.getElementById('timer-prog');
+    const CIRCUMFERENCE = 107;
+
+    // Build dots
+    navDots.innerHTML = '';
+    for (let i = 0; i < TOTAL_SLIDES; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dot.addEventListener('click', () => goTo(i));
+      navDots.appendChild(dot);
+    }
+
+    function updateUI() {
+      slides.forEach((s, i) => {
+        if (i === currentSlide) {
+          s.classList.remove('exit');
+          s.classList.add('active');
+        } else {
+          if (s.classList.contains('active')) {
+            s.classList.add('exit');
+            s.classList.remove('active');
+            // Wait for exit transition, then hide
+            setTimeout(() => {
+              if (!s.classList.contains('active')) s.classList.remove('exit');
+            }, 1000);
+          } else {
+            s.classList.remove('active', 'exit');
+          }
+        }
+      });
+
+      document.querySelectorAll('.dot').forEach((d, i) => {
+        d.classList.toggle('active', i === currentSlide);
+      });
+      const pct = (currentSlide / (TOTAL_SLIDES - 1)) * 100;
+      progressBar.style.width = pct + '%';
+      slideCounter.textContent =
+        String(currentSlide + 1).padStart(2, '0') + ' / ' +
+        String(TOTAL_SLIDES).padStart(2, '0');
+
+      if (typeof speakSlide === 'function') {
+        speakSlide(currentSlide);
+      }
+    }
+
+    function getSlideDuration(index) {
+      const script = SLIDE_SCRIPTS[index];
+      if (!script) return 10000; // fallback
+      // Roughly calculate based on text length: avg reading speed is ~15 chars/sec
+      return Math.max(10000, (script.length / 15) * 1000);
+    }
+
+    function startTimerAnim() {
+      cancelAnimationFrame(timerAnimFrame);
+      timerStart = performance.now();
+
+      function tick(now) {
+        if (!autoPlay) return;
+        const elapsed = now - timerStart;
+        const frac = Math.min(elapsed / currentSlideDuration, 1);
+        timerProg.style.strokeDashoffset = CIRCUMFERENCE * frac;
+
+        // Only loop animation if we are using fallback timers (TTS off)
+        if (frac < 1 && !ttsSpeaking) {
+          timerAnimFrame = requestAnimationFrame(tick);
+        } else if (ttsSpeaking) {
+          // While TTS is speaking, ping-pong the ring instead of filling it completely
+          const pulse = (Math.sin(now / 300) + 1) / 2;
+          timerProg.style.strokeDashoffset = CIRCUMFERENCE * (0.3 + (pulse * 0.4));
+          timerAnimFrame = requestAnimationFrame(tick);
+        }
+      }
+      timerAnimFrame = requestAnimationFrame(tick);
+    }
+
+    function scheduleNext() {
+      clearTimeout(slideTimer);
+      if (!autoPlay) return;
+
+      currentSlideDuration = getSlideDuration(currentSlide);
+      startTimerAnim();
+
+      // If TTS is enabled, we DO NOT set a timeout here.
+      // The utter.onend event will trigger goTo(currentSlide + 1)
+      if (ttsEnabled) {
+        // just wait for onend
+        return;
+      }
+
+      slideTimer = setTimeout(() => {
+        currentSlide = (currentSlide + 1) % TOTAL_SLIDES;
+        updateUI();
+        if (autoPlay) scheduleNext();
+      }, currentSlideDuration);
+    }
+
+    function goTo(idx) {
+      currentSlide = idx;
+      updateUI();
+      if (autoPlay) scheduleNext();
+    }
+
+    document.getElementById('nav-next').addEventListener('click', () => {
+      currentSlide = (currentSlide + 1) % TOTAL_SLIDES;
+      updateUI();
+      if (autoPlay) scheduleNext();
+    });
+
+    document.getElementById('nav-prev').addEventListener('click', () => {
+      currentSlide = (currentSlide - 1 + TOTAL_SLIDES) % TOTAL_SLIDES;
+      updateUI();
+      if (autoPlay) scheduleNext();
+    });
+
+    const autoBtn = document.getElementById('autoplay-btn');
+    autoBtn.addEventListener('click', () => {
+      autoPlay = !autoPlay;
+      autoBtn.textContent = autoPlay ? '⏸ PAUSE' : '▶ PLAY';
+      if (autoPlay) {
+        scheduleNext();
+      } else {
+        clearTimeout(slideTimer);
+        cancelAnimationFrame(timerAnimFrame);
+        timerProg.style.strokeDashoffset = 0;
+      }
+    });
+
+    // Keyboard nav
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        currentSlide = (currentSlide + 1) % TOTAL_SLIDES;
+        updateUI();
+        if (autoPlay) scheduleNext();
+      } else if (e.key === 'ArrowLeft') {
+        currentSlide = (currentSlide - 1 + TOTAL_SLIDES) % TOTAL_SLIDES;
+        updateUI();
+        if (autoPlay) scheduleNext();
+      }
+    });
+
+    // ─── Text-to-Speech Narrator ───
+    const SLIDE_SCRIPTS = [
+      // Slide 1: Title
+      "Welcome to the Nexus AI Burnout and Focus Guardian presentation. This is an intelligent, bilingual AI-powered health monitoring system built with Python, Flask, machine learning, and GPT-4. Developed by Karthikeyan as an AI and ML project in 2026.",
+
+      // Slide 2: Problem
+      "Today's working professionals face a silent health crisis. Studies show that 77 percent of employees experience burnout at work. 64 percent of knowledge workers are chronically sleep-deprived. And globally, over one trillion dollars is lost each year due to depression and anxiety linked to workplace burnout. Nexus AI is designed to detect and prevent burnout before it escalates.",
+
+      // Slide 3: System Architecture
+      "Nexus AI operates in three stages. First, data is collected from the user's daily tracker — including sleep hours, mood, work hours, screen time, and activity steps. Second, this data is processed by the AI engine, which combines the Focus Guardian algorithm, GPT-4 language model, and a Scikit-Learn heart disease classifier. Finally, the system delivers bilingual suggestions, voice alerts, cinematic reports, and proactive health interventions in both English and Tamil.",
+
+      // Slide 4: Burnout Guardian
+      "The Burnout and Focus Guardian is the core feature of this system. It analyses live health metrics in real time. For example, with only 6.5 hours of sleep, 10 hours of work, 8 hours of screen time, and a stressed mood — the system calculates a focus score of 55 percent and a burnout risk of 71 percent, flagging it as High Risk. Jarvis then provides actionable, bilingual recovery suggestions such as: Take a power nap, Step away for 15 minutes, and Hydrate and rest your eyes.",
+
+      // Slide 5: ML Models
+      "Nexus AI is powered by three predictive intelligence models. The Focus Guardian uses a rule-based algorithm enhanced by GPT-4, achieving an accuracy of 88 percent. The Heart Disease Predictor is a Scikit-Learn classifier trained on the UCI Heart Disease dataset with 13 medical features and 91 percent accuracy. The Disease Predictor uses symptom-matching natural language processing to identify conditions like flu, COVID-19, malaria, typhoid, and dengue — with 83 percent accuracy. These models are served through a Flask REST API using the free GPT-4 layer via g4f.",
+
+      // Slide 6: Multilingual
+      "A key differentiator of Nexus AI is its full bilingual intelligence. The system supports three language modes: English only, Tamil only, and a Bilingual mode that delivers every response in both languages simultaneously. For example, a weather query about Chennai returns: 'Weather in Chennai is 32 degrees Celsius with clear sky — please stay hydrated.' in English, followed immediately by the same message in Tamil. This makes the system accessible to a much wider audience across Tamil Nadu and South India.",
+
+      // Slide 7: Live Dashboard
+      "The Nexus AI dashboard is designed with a Jarvis-style cinematic interface. On the left sidebar, users see live Focus Guardian levels, Burnout Risk scores, and daily tracker stats including steps, mood, and sleep. The central chat panel provides natural language interaction with Jarvis. Users can switch between English, Tamil, and Bilingual modes instantly using the language pills in the header. The interface also includes a Cinematic Report button, which launches a full-screen HUD-style health presentation with animated metric rings.",
+
+      // Slide 8: Thank You
+      "Thank you for watching this presentation of Nexus AI — the AI Personal Health Care Assistant. This system integrates over 9 APIs, 3 machine learning models, and supports 2 languages, offering unlimited possibilities for proactive personal health monitoring. Built with passion by Karthikeyan in 2026."
+    ];
+
+    let ttsEnabled = false;
+    let ttsSpeaking = false;
+
+    const ttsBtn = document.getElementById('tts-btn');
+    const ttsIndicator = document.getElementById('tts-indicator');
+
+    // Add bar animation keyframes dynamically
+    const ttsStyle = document.createElement('style');
+    ttsStyle.textContent = `
+  @keyframes ttsBar {
+    from { height: 4px; }
+    to   { height: 18px; }
+  }
+  .tts-bar { display: inline-block; }
+  #tts-btn:hover { background: rgba(0,229,255,0.2) !important; }
+`;
+    document.head.appendChild(ttsStyle);
+
+    function speakSlide(index) {
+      if (!ttsEnabled || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const script = SLIDE_SCRIPTS[index];
+      if (!script) return;
+
+      const utter = new SpeechSynthesisUtterance(script);
+      window._currentUtterance = utter; // Prevent garbage collection bug
+      utter.rate = 0.95;
+      utter.pitch = 1;
+      utter.volume = 1;
+
+      // Try to find a good English voice
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v =>
+        v.name.includes('Google UK English Male') ||
+        v.name.includes('Microsoft David') ||
+        v.name.includes('Google US English') ||
+        (v.lang === 'en-GB' && !v.localService) ||
+        (v.lang === 'en-US' && !v.localService)
+      ) || voices.find(v => v.lang.startsWith('en'));
+      if (preferred) utter.voice = preferred;
+
+      utter.onstart = () => {
+        ttsSpeaking = true;
+        ttsIndicator.style.display = 'flex';
+
+        // Prevent Chrome 15-second cutoff bug
+        if (window.speechInterval) clearInterval(window.speechInterval);
+        window.speechInterval = setInterval(() => {
+          if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          }
+        }, 14000);
+      };
+      utter.onend = () => {
+        ttsSpeaking = false;
+        ttsIndicator.style.display = 'none';
+        if (window.speechInterval) clearInterval(window.speechInterval);
+
+        // Auto-advance if playing
+        if (autoPlay && ttsEnabled) {
+          currentSlide = (currentSlide + 1) % TOTAL_SLIDES;
+          updateUI();
+          scheduleNext();
+        }
+      };
+      utter.onerror = () => {
+        ttsSpeaking = false;
+        ttsIndicator.style.display = 'none';
+        if (window.speechInterval) clearInterval(window.speechInterval);
+
+        // Fallback advance on error
+        if (autoPlay && ttsEnabled) {
+          currentSlide = (currentSlide + 1) % TOTAL_SLIDES;
+          updateUI();
+          scheduleNext();
+        }
+      };
+
+      window.speechSynthesis.speak(utter);
+    }
+
+    ttsBtn.addEventListener('click', () => {
+      ttsEnabled = !ttsEnabled;
+      if (ttsEnabled) {
+        ttsBtn.textContent = '🔇 MUTE';
+        ttsBtn.style.background = 'rgba(0,229,255,0.2)';
+        ttsBtn.style.borderColor = '#00e5ff';
+        clearTimeout(slideTimer); // Stop manual timer immediately
+        speakSlide(currentSlide);
+      } else {
+        ttsBtn.textContent = '🔊 NARRATE';
+        ttsBtn.style.background = 'rgba(0,229,255,0.1)';
+        window.speechSynthesis.cancel();
+        ttsIndicator.style.display = 'none';
+
+        // Re-engage normal timing logic
+        if (autoPlay) scheduleNext();
+      }
+    });
+
+    // Voices may load async
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = () => { };
+    }
+
+    // End of script
+
+    // ─── Clock & HUD ───
+    function updateClock() {
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0];
+      document.getElementById('hud-clock').textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ─── Startup Sequence ───
+    function startPresentation() {
+      // Hide all slides initially
+      slides.forEach(s => s.classList.remove('active', 'exit'));
+
+      // Create a loading overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+    position: fixed; inset: 0; background: #030712; z-index: 2000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif; color: var(--cyan); letter-spacing: 5px;
+    transition: all 1s ease;
+  `;
+      overlay.innerHTML = `
+    <div style="font-size: 0.8rem; margin-bottom: 20px; opacity: 0.6;">INITIALIZING SYSTEM...</div>
+    <div style="width: 200px; height: 2px; background: rgba(0,229,255,0.1); border-radius: 1px; overflow: hidden;">
+      <div id="boot-progress" style="width: 0%; height: 100%; background: var(--cyan); transition: width 2s ease-in-out;"></div>
+    </div>
+    <div id="boot-status" style="font-size: 0.6rem; margin-top: 15px; color: rgba(255,255,255,0.3);">LOADING NEURAL CORE</div>
+  `;
+      document.body.appendChild(overlay);
+
+      const statuses = [
+        "LOADING NEURAL CORE...",
+        "ESTABLISHING SECURE LINK...",
+        "CALIBRATING SENSORS...",
+        "BOOTING NEXUS AI...",
+        "READY"
+      ];
+
+      let step = 0;
+      const bootInterval = setInterval(() => {
+        step++;
+        const pct = (step / statuses.length) * 100;
+        document.getElementById('boot-progress').style.width = pct + '%';
+        document.getElementById('boot-status').textContent = statuses[step - 1];
+
+        if (step >= statuses.length) {
+          clearInterval(bootInterval);
+          setTimeout(() => {
+            overlay.style.opacity = '0';
+            overlay.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+              overlay.remove();
+              updateUI();
+              scheduleNext();
+            }, 1000);
+          }, 500);
+        }
+      }, 600);
+    }
+
+    // Start
+    startPresentation();
+  </script>
+</body>
+
+</html>

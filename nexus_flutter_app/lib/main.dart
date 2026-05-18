@@ -5,6 +5,8 @@ import 'package:nexus_flutter_app/providers/auth_provider.dart';
 import 'package:nexus_flutter_app/screens/login_screen.dart';
 import 'package:nexus_flutter_app/screens/dashboard_screen.dart'; // To be created
 
+import 'package:nexus_flutter_app/providers/history_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final authProvider = AuthProvider();
@@ -14,6 +16,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider(create: (_) => HistoryProvider()),
       ],
       child: const NexusApp(),
     ),

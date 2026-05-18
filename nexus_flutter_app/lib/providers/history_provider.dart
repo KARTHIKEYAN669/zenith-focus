@@ -20,11 +20,12 @@ class HistoryProvider with ChangeNotifier {
 
     try {
       final response = await _apiClient.get(ApiConstants.history);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        _history = data['history'] ?? [];
-        _insights = data['insights'] ?? [];
-      }
+      final body = jsonDecode(response.body);
+      final data = body['data'] ?? body;
+      _history = data['history'] ?? [];
+      _insights = data['insights'] ?? [];
+    } on ApiException catch (e) {
+      print("Fetch history api error: ${e.message}");
     } catch (e) {
       print("Fetch history error: $e");
     }
@@ -33,19 +34,24 @@ class HistoryProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Map<String, dynamic>?> predictFocus(Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>?> predictFocus(Map<String, dynamic> reqBody) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final response = await _apiClient.post(ApiConstants.predict, body);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        await fetchHistory(); // Refresh history
-        _isLoading = false;
-        notifyListeners();
-        return data;
-      }
+      final response = await _apiClient.post(ApiConstants.predict, reqBody);
+      final body = jsonDecode(response.body);
+      final data = body['data'] ?? body;
+      await fetchHistory(); // Refresh history
+      _isLoading = false;
+      notifyListeners();
+      return data;
+    } on ApiException catch (e) {
+      print("Predict focus api error: ${e.message}");
+      // Re-throw so UI can catch it and show SnackBar
+      _isLoading = false;
+      notifyListeners();
+      throw e;
     } catch (e) {
       print("Predict focus error: $e");
     }

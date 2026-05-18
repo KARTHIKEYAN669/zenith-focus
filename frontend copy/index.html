@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Voice Assistant</title>
+    <!-- Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+</head>
+
+<body>
+    <div class="page-wrapper">
+        <!-- Main Chat App -->
+        <div class="app-container">
+            <!-- Header -->
+            <header class="glass-header">
+                <div class="header-main-group">
+                    <h1>Nexus AI</h1>
+                </div>
+                <div class="header-actions" style="display: flex; align-items: center; gap: 12px;">
+                    <button id="header-history-btn" class="header-icon-btn" title="View Chat History">
+                        <span class="v-icon">📜</span>
+                    </button>
+                    <button id="header-speech-btn" class="header-icon-btn" title="Toggle Voice">
+                        <span class="v-icon">🔊</span>
+                    </button>
+                    <button id="share-app-btn" title="Open on Mobile"
+                        style="background: none; border: none; cursor: pointer; color: var(--text-main);">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                    </button>
+                    <div class="status-indicator"></div>
+                </div>
+            </header>
+
+            <!-- Share Modal -->
+            <div id="share-modal" class="glass-modal" style="display: none;">
+                <div class="modal-content">
+                    <button id="close-modal-btn" class="close-btn">×</button>
+                    <h2>Multi-Device Access</h2>
+                    <p>Scan to open the AI Chatbot on your phone or tablet.</p>
+                    <div id="app-qr-container" class="large-qr-container">
+                        <!-- QR Code goes here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat History -->
+            <main id="chat-box" class="chat-column">
+                <div class="message bot">
+                    <div class="bubble">Hello! I am your AI assistant. Tap the microphone to speak.</div>
+                </div>
+            </main>
+
+            <!-- Interactive Voice Orb & Text Controls -->
+            <div class="controls-area glass-footer">
+                <p id="transcript-preview" data-i18n="ready">Ready</p>
+                <div id="attachment-shelf" class="attachment-shelf" style="display: none;"></div>
+                <div class="input-row">
+                    <input type="file" id="file-input" multiple style="display: none;">
+                    <button id="attachment-trigger" class="attachment-trigger" title="Attach Media"
+                        data-i18n-title="title_attach">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                    <input type="text" id="text-input" class="text-search-bar" placeholder="Message Nexus AI..."
+                        data-i18n-placeholder="placeholder_chat" autocomplete="off">
+                    <button id="send-btn" class="send-button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor" />
+                        </svg>
+                    </button>
+                    <button id="mic-btn" class="mic-button small-mic">
+                        <svg id="mic-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"
+                                fill="currentColor" />
+                            <path
+                                d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"
+                                fill="currentColor" />
+                        </svg>
+                        <div class="pulse-ring"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health & Focus Sidebar -->
+        <aside class="health-sidebar glass-panel">
+            <div class="sidebar-header">
+                <div class="sidebar-tabs">
+                    <button id="tab-health" class="tab-btn active" data-i18n="tab_health">Health</button>
+                    <button id="tab-library" class="tab-btn" data-i18n="tab_library">Library</button>
+                    <button id="tab-settings" class="tab-btn" data-i18n="tab_settings">Setting</button>
+                </div>
+                <div class="pulse-dot"></div>
+            </div>
+
+            <!-- Health Tab Content -->
+            <div id="content-health" class="sidebar-tab-content">
+                <!-- System Hero Card -->
+                <div class="stat-card hero-card">
+                    <div id="hero-video-container" class="hero-video-container">
+                        <div class="hero-overlay"></div>
+                        <video id="hero-video" muted loop playsinline></video>
+                    </div>
+                    <div class="hero-content">
+                        <h2 class="hero-title" data-i18n="hero_title">AI Powered Burnout Prediction & Recovery System
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="stat-card device-sync-card">
+                    <div class="card-header-row">
+                        <h3 data-i18n="devices_title">Connected Devices</h3>
+                    </div>
+                    <div class="device-list">
+                        <div class="device-item">
+                            <span class="device-icon" id="watch-icon">📡</span>
+                            <div class="device-info">
+                                <div class="device-name-row">
+                                    <span class="device-name" id="smartwatch-name" data-i18n="searching_watch">Searching
+                                        for Watch...</span>
+                                    <button class="edit-device-btn" id="edit-watch-btn" title="Change Watch"
+                                        style="display: none;">✎</button>
+                                </div>
+                                <span class="device-status scanning" id="smartwatch-status"
+                                    data-i18n="scanning_bt">Scanning Bluetooth...</span>
+                            </div>
+                        </div>
+                        <div class="device-item">
+                            <span class="device-icon" id="phone-icon">📡</span>
+                            <div class="device-info">
+                                <div class="device-name-row">
+                                    <span class="device-name" id="mobile-name" data-i18n="searching_mobile">Searching
+                                        for Mobile...</span>
+                                    <button class="edit-device-btn" id="edit-phone-btn" title="Change Mobile"
+                                        style="display: none;">✎</button>
+                                </div>
+                                <span class="device-status scanning" id="mobile-status"
+                                    data-i18n="scanning_wifi">Scanning WiFi...</span>
+                                <a id="mobile-link" href="#" target="_blank"
+                                    style="font-size: 0.7rem; color: var(--primary); display: none; margin-top: 4px;">Click
+                                    to Connect</a>
+                            </div>
+                            <div class="qr-container" id="mobile-qr-container"
+                                style="display: none; margin-left: auto;">
+                                <!-- QR code injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3 data-i18n="focus_guardian">Focus Guardian Level</h3>
+                    <div class="progress-bar">
+                        <div class="progress focus-progress" id="focus-level-bar" style="width: 100%;"></div>
+                    </div>
+                    <p id="focus-level-text" class="stat-value">100%</p>
+                </div>
+
+                <div class="stat-card" id="tracker-card">
+                    <h3 data-i18n="tracker_title">Daily Tracker</h3>
+                    <div class="tracker-item">
+                        <span data-i18n="steps">Steps</span>
+                        <span id="steps-val" class="metric-val">0 / 10000</span>
+                    </div>
+                    <div class="tracker-item" style="margin-top:8px;">
+                        <div class="progress-bar">
+                            <div class="progress" id="steps-bar"
+                                style="width: 0%; background: linear-gradient(90deg, #10b981, #3b82f6);"></div>
+                        </div>
+                    </div>
+                    <div class="tracker-item" style="margin-top:12px;">
+                        <span data-i18n="mood">Mood</span>
+                        <select id="mood-select" class="tracker-select">
+                            <option value="happy" data-i18n="mood_happy">😊 Happy</option>
+                            <option value="fine" selected data-i18n="mood_fine">😐 Fine</option>
+                            <option value="stressed" data-i18n="mood_stressed">😫 Stressed</option>
+                        </select>
+                    </div>
+                    <div class="tracker-item" style="margin-top:12px;">
+                        <span data-i18n="sleep">Sleep (hrs)</span>
+                        <input type="number" id="sleep-input" value="8" step="0.5" class="tracker-select"
+                            style="width: 60px;">
+                    </div>
+                    <div class="tracker-item" style="margin-top:8px;">
+                        <span data-i18n="work">Work (hrs)</span>
+                        <input type="number" id="work-input" value="8" step="0.5" class="tracker-select"
+                            style="width: 60px;">
+                    </div>
+                    <div class="tracker-item" style="margin-top:8px;">
+                        <span data-i18n="screen">Screen (hrs)</span>
+                        <input type="number" id="screen-input" value="6" step="0.5" class="tracker-select"
+                            style="width: 60px;">
+                    </div>
+                    <div class="tracker-item" style="margin-top:12px; display:block;">
+                        <span style="display:block; margin-bottom: 5px;" data-i18n="tasks">Tasks</span>
+                        <ul id="task-list"
+                            style="list-style: none; padding: 0; font-size: 0.9rem; max-height: 100px; overflow-y: auto;">
+                            <li style="margin-bottom: 4px;"><input type="checkbox" id="task1" checked> <label
+                                    for="task1">Morning Walk</label></li>
+                            <li style="margin-bottom: 4px;"><input type="checkbox" id="task2"> <label for="task2">Code
+                                    AI Module</label></li>
+                            <li style="margin-bottom: 4px;"><input type="checkbox" id="task3"> <label for="task3">Team
+                                    Sync</label></li>
+                        </ul>
+                        <div style="display: flex; gap: 5px; margin-top: 8px;">
+                            <input type="text" id="new-task-input" placeholder="Add a new task..."
+                                data-i18n-placeholder="placeholder_task" autocomplete="off" class="tracker-select"
+                                style="flex:1;">
+                            <button id="add-task-btn"
+                                style="background: var(--primary); color: white; border: none; border-radius: 6px; padding: 0 10px; cursor: pointer; font-family: 'Outfit';">+</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="stat-card" id="suggestions-card" style="display: none;">
+                <h3 data-i18n="suggestions">Proactive Suggestions</h3>
+                <div id="suggestions-list" class="suggestions-grid">
+
+                    <div class="stat-card">
+                        <h3 data-i18n="speech_status">Speech & Voice</h3>
+                        <div class="voice-control-panel">
+                            <button id="speech-toggle-btn" class="voice-btn toggle-btn active">
+                                <span class="v-icon">🔊</span> <span id="speech-status-text">Voice Enabled</span>
+                            </button>
+                            <button id="test-voice-btn" class="voice-btn test-btn">
+                                <span class="v-icon">⚡</span> Test Audio
+                            </button>
+                        </div>
+                    </div>
+
+
+                </div> <!-- End Health Tab -->
+
+
+                <!-- Library Tab Content -->
+                <div id="content-library" class="sidebar-tab-content" style="display: none;">
+                    <div class="card-header-row" style="scroll-margin-block-end: 10px;">
+                        <h3 data-i18n="library_archives">Archives & History</h3>
+                        <div class="header-actions">
+                            <button id="refresh-library" class="refresh-btn">🔄</button>
+                        </div>
+                    </div>
+
+                    <!-- Library Insights Card -->
+                    <div id="library-insights" class="stat-card"
+                        style="margin-bottom: 15px; padding: 12px; font-size: 0.8rem; background: var(--glass-bg); display: none;">
+                        <h4 style="margin-bottom: 8px; color: var(--primary);">System Insights</h4>
+                        <div id="lib-stats-content">
+                            <!-- Stats injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Library Sub-tabs -->
+                    <div class="sidebar-tabs library-sub-tabs"
+                        style="margin-bottom: 15px; border-radius: 10px; padding: 4px; background: rgba(0,0,0,0.05);">
+                        <button id="lib-files-btn" class="tab-btn active" data-i18n="lib_tab_assets"
+                            style="font-size: 0.75rem; padding: 6px;">Assets</button>
+                        <button id="lib-history-btn" class="tab-btn" data-i18n="lib_tab_history"
+                            style="font-size: 0.75rem; padding: 6px;">Chat History</button>
+                    </div>
+
+                    <div id="library-grid" class="library-grid">
+                        <!-- Library items injected here -->
+                        <p class="empty-state" data-i18n="empty_lib">No files uploaded yet.</p>
+                    </div>
+                    <div id="history-list" class="history-list"
+                        style="display: none; flex-direction: column; gap: 10px;">
+                        <p class="empty-state">No chat history found.</p>
+                    </div>
+                </div>
+
+                <!-- Settings Tab Content -->
+                <div id="content-settings" class="sidebar-tab-content" style="display: none;">
+                    <div class="stat-card">
+                        <h3 data-i18n="system_status">System Status</h3>
+                        <div class="metric-row">
+                            <span data-i18n="ai_engine">AI Engine</span>
+                            <span id="ai-engine-status" class="metric-val good" data-i18n="online">Online</span>
+                        </div>
+                        <div class="metric-row">
+                            <span data-i18n="memory">Memory</span>
+                            <span id="memory-status" class="metric-val" data-i18n="optimal">Optimal</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" id="sidebar-chat-history-card">
+                        <h3 data-i18n="lib_tab_history">Chat History & Archives</h3>
+                        <p class="stat-desc" style="margin-bottom: 12px;">Quick access to your session logs and archived
+                            conversations.</p>
+
+                        <div id="sidebar-history-list"
+                            style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                            <!-- Mini history items injected here -->
+                        </div>
+
+                        <div class="voice-control-panel">
+                            <button id="sidebar-history-btn" class="voice-btn toggle-btn"
+                                style="width: 100%; justify-content: center; background: var(--primary); color: white;">
+                                <span class="v-icon">📜</span> <span>View Full Archives</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 data-i18n="settings_lang_title">Language Preference</h3>
+                        <p class="stat-desc" style="margin-bottom:12px;" data-i18n="settings_lang_desc">Choose how
+                            Jarvis
+                            communicates with you.</p>
+                        <div class="voice-control-panel" style="gap: 8px;">
+                            <button class="lang-select-btn active" data-lang="en">English</button>
+                            <button class="lang-select-btn" data-lang="ta">தமிழ் (Tamil)</button>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 data-i18n="early_warning_title">Early Warning Detection</h3>
+                        <p class="stat-desc" style="margin-bottom: 12px;" data-i18n="early_warning_desc">Proactively
+                            detect signs of
+                            stress and burnout before they escalate.</p>
+                        <div class="voice-control-panel">
+                            <button id="warning-toggle-btn" class="voice-btn toggle-btn active"
+                                style="width: 100%; justify-content: center;">
+                                <span class="v-icon">🛡️</span> <span id="warning-status-text"
+                                    data-i18n="warning_active">Detection
+                                    Active</span>
+                            </button>
+                        </div>
+                        <div class="progress-bar" style="margin-top: 15px;" id="warning-progress-container">
+                            <div class="progress" id="warning-level-bar"
+                                style="width: 0%; background: linear-gradient(90deg, #10b981, #f59e0b);"></div>
+                        </div>
+                        <div class="metric-row">
+                            <span id="warning-score-text" class="stat-value"
+                                style="font-size: 1.1rem; color: #f59e0b;">0%
+                                Detected</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3 data-i18n="recovery_system_title">Personalized Recovery System</h3>
+                        <p class="stat-desc" style="margin-bottom: 12px;" data-i18n="recovery_system_desc">Tailor AI
+                            recovery
+                            suggestions to your specific stress factors.</p>
+                        <div class="voice-control-panel">
+                            <button id="recovery-toggle-btn" class="voice-btn toggle-btn active"
+                                style="width: 100%; justify-content: center;">
+                                <span class="v-icon">🌱</span> <span id="recovery-status-text"
+                                    data-i18n="recovery_active">System
+                                    Enabled</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+        </aside>
+    </div>
+
+
+    <!-- Media Preview Modal -->
+    <div id="media-modal" class="modal-overlay" style="display: none;">
+        <div class="media-modal-content glass-panel">
+            <div class="modal-header">
+                <h3 id="media-title">Media Preview</h3>
+                <button id="close-media-modal" class="close-btn">×</button>
+            </div>
+            <div id="media-viewer" class="media-viewer">
+                <!-- Media injected here -->
+            </div>
+            <div class="media-footer">
+                <button class="gen-submit-btn" id="modal-analyze-btn">🧠 <span data-i18n="analyze_btn">Analyze with
+                        AI</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cinematic Presentation Overlay -->
+    <div id="presentation-overlay" class="presentation-overlay" style="display: none;">
+        <button id="close-presentation" class="close-btn"
+            style="color: white; top: 30px; right: 30px; font-size: 2.5rem;">×</button>
+        <div class="hud-container">
+            <div class="hud-header">
+                <div class="hud-scanner-text">SYSTEM SCANNING...</div>
+                <h1 class="hud-title">AI HEALTH GUARDIAN</h1>
+            </div>
+
+            <div class="hud-main">
+                <div class="hud-stat-ring">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" class="ring-bg"></circle>
+                        <circle id="hud-ring-focus" cx="50" cy="50" r="45" class="ring-prog focus"
+                            stroke-dasharray="283" stroke-dashoffset="0"></circle>
+                    </svg>
+                    <div class="ring-content">
+                        <span class="ring-label">FOCUS</span>
+                        <span id="hud-focus-val" class="ring-value">100%</span>
+                    </div>
+                </div>
+
+                <div class="hud-stat-ring">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" class="ring-bg"></circle>
+                        <circle id="hud-ring-burnout" cx="50" cy="50" r="45" class="ring-prog burnout"
+                            stroke-dasharray="283" stroke-dashoffset="283"></circle>
+                    </svg>
+                    <div class="ring-content">
+                        <span class="ring-label">BURNOUT</span>
+                        <span id="hud-burnout-val" class="ring-value">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hud-footer">
+                <div id="hud-summary" class="hud-summary">
+                    Initializing health analysis... Jarvis is summing up your focus and burnout guardian metrics.
+                </div>
+                <div class="hud-grid-bg"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

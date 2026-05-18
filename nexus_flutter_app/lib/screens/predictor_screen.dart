@@ -18,20 +18,36 @@ class _PredictorScreenState extends State<PredictorScreen> {
 
   void _submit() async {
     final history = Provider.of<HistoryProvider>(context, listen: false);
-    final result = await history.predictFocus({
-      'sleep': _sleep,
-      'study': _study,
-      'screen_time': _screen,
-      'breaks': _breaks,
-      'mood': _mood.toLowerCase(),
-    });
+    try {
+      final result = await history.predictFocus({
+        'sleep': _sleep,
+        'study': _study,
+        'screen_time': _screen,
+        'breaks': _breaks,
+        'mood': _mood.toLowerCase(),
+      });
 
-    if (result != null && mounted) {
-      _showResultDialog(result);
+      if (result != null && mounted) {
+        _showResultDialog(result);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     }
   }
 
   void _showResultDialog(Map<String, dynamic> result) {
+    Color statusColor = Colors.green;
+    String status = result['status'].toString().toLowerCase();
+    if (status.contains('poor') || status.contains('weak') || status.contains('high')) statusColor = Colors.redAccent;
+    if (status.contains('moderate') || status.contains('average')) statusColor = Colors.orangeAccent;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF161B22),
@@ -44,21 +60,58 @@ class _PredictorScreenState extends State<PredictorScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                "Focus Score: ${result['focus_score']}%",
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      const Text("Focus Score", style: TextStyle(color: Colors.white70)),
+                      Text(
+                        "${result['focus_score']}%",
+                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF6366F1)),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Text("Burnout Score", style: TextStyle(color: Colors.white70)),
+                      Text(
+                        "${result['burnout_score'] ?? 0}%",
+                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFFEF4444)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                "Status: ${result['status']}",
-                style: const TextStyle(fontSize: 18, color: Colors.white70),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: statusColor.withOpacity(0.5)),
+                ),
+                child: Text(
+                  "Status: ${result['status']}",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: statusColor),
+                ),
               ),
               const SizedBox(height: 24),
-              const Text("AI Recommendations:", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text("AI Recommendations:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
               const SizedBox(height: 8),
-              ...((result['tips'] as List).map((tip) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text("• $tip", style: const TextStyle(fontSize: 14)),
+              ...((result['tips'] as List? ?? []).map((tip) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.check_circle_outline, color: Color(0xFF10B981), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(tip.toString(), style: const TextStyle(fontSize: 14))),
+                  ],
+                ),
               )).toList()),
               const SizedBox(height: 24),
               SizedBox(

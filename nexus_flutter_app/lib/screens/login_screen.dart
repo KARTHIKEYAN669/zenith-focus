@@ -16,13 +16,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _submit() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final success = _isLogin 
+    final errorMsg = _isLogin 
       ? await auth.login(_usernameController.text, _passwordController.text)
       : await auth.register(_usernameController.text, _passwordController.text);
 
-    if (!success && mounted) {
+    if (errorMsg != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Authentication failed. Check your credentials.")),
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }

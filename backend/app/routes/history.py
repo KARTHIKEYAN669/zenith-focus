@@ -8,6 +8,19 @@ bp = Blueprint('history', __name__)
 @bp.route('/', methods=['GET'])
 @jwt_required()
 def get_history():
+    """
+    Get User Prediction History
+    ---
+    tags:
+      - Health Metrics
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: History and insights retrieved
+      401:
+        description: Unauthorized
+    """
     user_id = get_jwt_identity()
     
     # Get last 15 records, ordered by newest first
@@ -19,6 +32,10 @@ def get_history():
     insights = generate_multi_day_insights(chronological_data)
     
     return jsonify({
-        "history": chronological_data,
-        "insights": insights
+        "status": "success",
+        "message": "History and insights retrieved",
+        "data": {
+            "history": chronological_data,
+            "insights": insights
+        }
     }), 200

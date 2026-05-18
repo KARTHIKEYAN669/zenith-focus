@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const authError = document.getElementById('auth-error');
     const authSubmit = document.getElementById('auth-submit');
     const logoutBtn = document.getElementById('logout-btn');
+    const onboardingSection = document.getElementById('onboarding-section');
+    const startOnboardingBtn = document.getElementById('start-onboarding-btn');
     
     let isLoginMode = true;
 
@@ -16,23 +18,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function checkAuth() {
         try {
-            const res = await fetch('/api/user', { credentials: 'include' });
-            const data = await res.json();
-            if (data.logged_in) {
+            const res = await fetch('/api/auth/me', { credentials: 'include' });
+            const payload = await res.json();
+            const data = payload.data;
+            if (payload.status === 'success' && data && data.logged_in) {
                 showApp(data.is_admin);
             } else {
-                showAuth();
+                showOnboarding();
             }
         } catch(e) {
-            showAuth();
+            showOnboarding();
         }
     }
 
     function showApp(isAdmin) {
+        if(onboardingSection) onboardingSection.style.display = 'none';
         authSection.style.display = 'none';
         appSection.style.display = 'block';
         logoutBtn.style.display = 'block';
-        document.getElementById('feedback-fab').style.display = 'block';
+
         if (isAdmin) {
             document.getElementById('nav-admin').style.display = 'block';
         } else {
@@ -41,10 +45,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showAuth() {
+        if(onboardingSection) onboardingSection.style.display = 'none';
         authSection.style.display = 'block';
         appSection.style.display = 'none';
         logoutBtn.style.display = 'none';
-        document.getElementById('feedback-fab').style.display = 'none';
+
+    }
+
+    function showOnboarding() {
+        if(onboardingSection) onboardingSection.style.display = 'block';
+        authSection.style.display = 'none';
+        appSection.style.display = 'none';
+        logoutBtn.style.display = 'none';
+    }
+
+    if(startOnboardingBtn) {
+        startOnboardingBtn.addEventListener('click', () => {
+            showAuth();
+        });
     }
 
     // Toggle Login/Register
@@ -59,29 +77,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle Auth Submission
     authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         
-        const endpoint = isLoginMode ? '/api/login' : '/api/register';
+        const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
         
         try {
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ email, password }),
                 credentials: 'include'
             });
-            const data = await res.json();
+            const payload = await res.json();
+            const data = payload.data;
             
-            if (res.ok) {
+            if (res.ok && payload.status === 'success') {
                 authError.style.display = 'none';
                 authForm.reset();
                 showApp(data.is_admin);
-                if (!isLoginMode) {
-                    document.getElementById('onboarding-modal').style.display = 'block';
-                }
             } else {
-                authError.textContent = data.error || 'Authentication failed';
+                authError.textContent = payload.message || 'Authentication failed';
+                if (data && typeof data === 'object') {
+                    // Handle validation errors if they exist in data
+                    const details = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(', ');
+                    if (details) authError.textContent += ` (${details})`;
+                }
                 authError.style.display = 'block';
             }
         } catch(err) {
@@ -92,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Logout
     logoutBtn.addEventListener('click', async () => {
-        await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
         showAuth();
     });
 
@@ -151,79 +172,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Feedback and Onboarding Listeners
-    const feedbackFab = document.getElementById('feedback-fab');
-    const feedbackModal = document.getElementById('feedback-modal');
-    const closeFeedback = document.getElementById('close-feedback');
-    const feedbackForm = document.getElementById('feedback-form');
-    
-    feedbackFab.addEventListener('click', () => feedbackModal.style.display = 'block');
-    closeFeedback.addEventListener('click', () => feedbackModal.style.display = 'none');
-    
-    feedbackForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const category = document.getElementById('feedback-category').value;
-        const message = document.getElementById('feedback-message').value;
-        
-        try {
-            await fetch('/api/feedback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ category, message }),
-                credentials: 'include'
-            });
-            feedbackModal.style.display = 'none';
-            feedbackForm.reset();
-            alert('Thank you for your feedback!');
-        } catch (error) {
-            alert('Error submitting feedback.');
-        }
-    });
-
-    document.getElementById('close-onboarding').addEventListener('click', () => {
-        document.getElementById('onboarding-modal').style.display = 'none';
-    });
-
     // Admin Data
     async function fetchAdminStats() {
         try {
             const res = await fetch('/api/admin/stats', { credentials: 'include' });
             if (!res.ok) return;
-            const data = await res.json();
+            const payload = await res.json();
+            if (payload.status !== 'success') return;
+            const data = payload.data;
             
             document.getElementById('admin-total-users').textContent = data.total_users;
             document.getElementById('admin-total-scores').textContent = data.total_scores;
-            
-            const list = document.getElementById('admin-feedback-list');
-            list.innerHTML = data.feedback.length === 0 
-                ? '<p style="color:var(--text-secondary)">No feedback yet.</p>' 
-                : data.feedback.map(f => `
-                    <div style="background:rgba(0,0,0,0.3); padding:1rem; border-radius:12px; margin-bottom:1rem; border-left:4px solid var(--accent-color);">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; color:var(--text-secondary); font-size:0.9rem;">
-                            <span><strong>${f.username}</strong> [${f.category}]</span>
-                            <span>${f.timestamp.split(' ')[0]}</span>
-                        </div>
-                        <p>${f.message}</p>
-                    </div>
-                `).join('');
                 
         } catch (error) {
             console.error('Failed to load admin stats:', error);
         }
     }
 
+
+
     let historyChartInstance = null;
     let radarChartInstance = null;
 
     async function fetchAndDrawHistory() {
         try {
-            const response = await fetch('/api/history', { credentials: 'include' });
+            const response = await fetch('/api/history/', { credentials: 'include' });
             const payload = await response.json();
             
-            if (payload.error || !payload.history) return;
+            if (payload.status !== 'success' || !payload.data || !payload.data.history) return;
             
-            const data = payload.history;
-            const insights = payload.insights;
+            const data = payload.data.history;
+            const insights = payload.data.insights;
             
             if (data.length === 0) return;
 
@@ -395,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Make API request to our backend
-            const response = await fetch('/api/predict', {
+            const response = await fetch('/api/predict/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -404,11 +383,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 credentials: 'include'
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch prediction');
+            const payload = await response.json();
+            
+            if (!response.ok || payload.status === 'error') {
+                let errorMsg = payload.message || 'Failed to calculate score';
+                if (payload.data && typeof payload.data === 'object') {
+                    const details = Object.entries(payload.data).map(([k, v]) => `${k}: ${v}`).join(', ');
+                    if (details) errorMsg += ` - ${details}`;
+                }
+                throw new Error(errorMsg);
             }
 
-            const data = await response.json();
+            const data = payload.data;
             const score = Math.round(data.focus_score);
             
             // Animate UI updates
@@ -416,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Error:', error);
-            scoreMessage.textContent = 'An error occurred while calculating your score. Please try again.';
+            scoreMessage.textContent = error.message || 'An error occurred while calculating your score. Please try again.';
             scoreMessage.style.color = '#ff4b4b';
         } finally {
             // Restore button state

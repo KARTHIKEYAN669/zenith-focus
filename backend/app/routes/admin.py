@@ -1,7 +1,7 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt
+from flask import Blueprint, jsonify, current_app
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from app.extensions import db
-from app.models import User, History, Feedback
+from app.models import User, History
 
 bp = Blueprint('admin', __name__)
 
@@ -14,36 +14,38 @@ def admin_required():
 @bp.route('/stats', methods=['GET'])
 @jwt_required()
 def admin_stats():
+    """
+    Get Admin Dashboard Stats
+    ---
+    tags:
+      - Admin
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Admin stats retrieved
+      403:
+        description: Admin access required
+      401:
+        description: Unauthorized
+    """
     if not admin_required():
-        return jsonify({'error': 'Unauthorized'}), 403
+        current_app.logger.warning(f"Unauthorized admin access attempt by user {get_jwt_identity()}")
+        return jsonify({
+            "status": "error",
+            "message": "Admin access required",
+            "data": None
+        }), 403
         
     total_users = User.query.count()
     total_scores = History.query.count()
     
-    # Get feedback with usernames
-    feedbacks = Feedback.query.order_by(Feedback.id.desc()).all()
-    feedback_data = [fb.to_dict() for fb in feedbacks]
-    
     return jsonify({
-        'total_users': total_users,
-        'total_scores': total_scores,
-        'feedback': feedback_data
+        "status": "success",
+        "message": "Admin stats retrieved",
+        "data": {
+            'total_users': total_users,
+            'total_scores': total_scores,
+            'feedback': [] 
+        }
     }), 200
-
-@bp.route('/feedback', methods=['POST'])
-@jwt_required()
-def submit_feedback():
-    user_id = get_jwt_identity()
-    data = request.json
-    
-    category = data.get('category')
-    message = data.get('message')
-    
-    if not message:
-        return jsonify({'error': 'Message required'}), 400
-        
-    new_feedback = Feedback(user_id=user_id, category=category, message=message)
-    db.session.add(new_feedback)
-    db.session.commit()
-    
-    return jsonify({'success': True}), 201

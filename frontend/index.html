@@ -26,13 +26,22 @@
             </div>
         </header>
 
+        <!-- Onboarding Section -->
+        <div id="onboarding-section" class="glass-panel" style="max-width: 600px; margin: 50px auto; text-align: center;">
+            <h1 style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--accent-color);">Welcome to Nexus AI! 🎉</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem; line-height: 1.6;">
+                We are thrilled to have you in our exclusive Beta. To get started, you'll log your sleep, study hours, and screen time. Our AI Coach will generate your first Focus Score and guide you towards better productivity and health.
+            </p>
+            <button id="start-onboarding-btn" class="glow-button" style="padding: 15px 40px; font-size: 1.2rem;">Let's Get Started</button>
+        </div>
+
         <!-- Auth Section -->
-        <div id="auth-section" class="glass-panel" style="max-width: 400px; margin: 0 auto; text-align: center;">
+        <div id="auth-section" class="glass-panel" style="display: none; max-width: 400px; margin: 0 auto; text-align: center;">
             <h2 id="auth-title">Login</h2>
             <form id="auth-form">
                 <div class="input-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="name@example.com" required>
                 </div>
                 <div class="input-group">
                     <label for="password">Password</label>
@@ -201,52 +210,12 @@
                         <span>Total Scores:</span> <strong id="admin-total-scores" style="font-size: 1.5rem; color: #ff007a;">0</strong>
                     </div>
                 </div>
-                
-                <div class="glass-panel" style="grid-column: 1 / -1;">
-                    <h2>User Feedback</h2>
-                    <div id="admin-feedback-list" style="max-height: 400px; overflow-y: auto;">
-                        <!-- Feedback items injected here -->
-                    </div>
-                </div>
             </div>
         </div>
 
         </div> <!-- End App Section -->
         
-        <!-- Feedback Floating Button -->
-        <button id="feedback-fab" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 50px; height: 50px; border-radius: 25px; background: var(--accent-color); border: none; color: #000; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px var(--accent-glow); z-index: 1000;">
-            <i class="fa-solid fa-comment-dots"></i>
-        </button>
 
-        <!-- Feedback Modal -->
-        <div id="feedback-modal" class="glass-panel" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; width: 90%; max-width: 400px; box-shadow: 0 0 50px rgba(0,0,0,0.8);">
-            <h2>Submit Feedback</h2>
-            <form id="feedback-form">
-                <div class="input-group">
-                    <label for="feedback-category">Category</label>
-                    <select id="feedback-category" required>
-                        <option value="bug">Bug Report</option>
-                        <option value="feature">Feature Request</option>
-                        <option value="ui">UI/UX Issue</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="feedback-message">Message</label>
-                    <textarea id="feedback-message" rows="4" required style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; color: #fff; resize: none;"></textarea>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button type="button" class="tab-btn" id="close-feedback" style="flex: 1;">Cancel</button>
-                    <button type="submit" class="glow-button" style="flex: 1; margin-top: 0; padding: 10px;">Submit</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Onboarding Modal -->
-        <div id="onboarding-modal" class="glass-panel" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; width: 90%; max-width: 400px; box-shadow: 0 0 50px rgba(0,0,0,0.8); text-align: center;">
-            <h2>Welcome to Nexus AI! 🎉</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">We are thrilled to have you in our exclusive Beta. To get started, log your sleep, study hours, and screen time to generate your first Focus Score and let our AI Coach guide you.</p>
-            <button id="close-onboarding" class="glow-button">Let's Go!</button>
-        </div>
     </main>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

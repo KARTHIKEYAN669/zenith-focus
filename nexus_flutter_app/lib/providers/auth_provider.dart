@@ -16,62 +16,95 @@ class AuthProvider with ChangeNotifier {
 
   final ApiClient _apiClient = ApiClient();
 
-  Future<bool> login(String username, String password) async {
+  AuthProvider() {
+    _apiClient.onUnauth = () {
+      _isAuthenticated = false;
+      _isAdmin = false;
+      _username = null;
+      notifyListeners();
+    };
+  }
+
+  Future<String?> login(String username, String password) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       final response = await _apiClient.post(
         ApiConstants.login,
-        {'username': username, 'password': password},
+        {'email': username, 'password': password},
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        await _apiClient.setTokens(data['access_token'], data['refresh_token']);
-        _isAuthenticated = true;
-        _isAdmin = data['is_admin'] ?? false;
-        _username = data['username'];
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      }
-    } catch (e) {
-      print("Login error: $e");
-    }
+      print("LOGIN RESPONSE: ${response.body}");
+      final body = jsonDecode(response.body);
+      final data = body['data'];
 
-    _isLoading = false;
-    notifyListeners();
-    return false;
+      if (data == null) {
+        throw ApiException(0, body['message'] ?? "Invalid response from server");
+      }
+
+      await _apiClient.setTokens(
+        data['access_token'],
+        data['refresh_token'] ?? '',
+      );
+
+      _isAuthenticated = true;
+      _isAdmin = data['user']?['is_admin'] ?? false;
+      _username = data['user']?['email'] ?? '';
+      
+      _isLoading = false;
+      notifyListeners();
+      return null; // Success
+    } on ApiException catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      return "Login failed";
+    }
   }
 
-  Future<bool> register(String username, String password) async {
+  Future<String?> register(String username, String password) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       final response = await _apiClient.post(
         ApiConstants.register,
-        {'username': username, 'password': password},
+        {'email': username, 'password': password},
       );
 
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        await _apiClient.setTokens(data['access_token'], data['refresh_token']);
-        _isAuthenticated = true;
-        _isAdmin = data['is_admin'] ?? false;
-        _username = data['username'];
-        _isLoading = false;
-        notifyListeners();
-        return true;
-      }
-    } catch (e) {
-      print("Register error: $e");
-    }
+      print("REGISTER RESPONSE: ${response.body}");
+      final body = jsonDecode(response.body);
+      final data = body['data'];
 
-    _isLoading = false;
-    notifyListeners();
-    return false;
+      if (data == null) {
+        throw ApiException(0, body['message'] ?? "Invalid response from server");
+      }
+
+      await _apiClient.setTokens(
+        data['access_token'],
+        data['refresh_token'] ?? '',
+      );
+
+      _isAuthenticated = true;
+      _isAdmin = data['user']?['is_admin'] ?? false;
+      _username = data['user']?['email'] ?? '';
+
+      _isLoading = false;
+      notifyListeners();
+      return null;
+    } on ApiException catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      return e.message;
+    } catch (e) {
+      _isLoading = false;
+      notifyListeners();
+      return "Registration failed";
+    }
   }
 
   Future<void> logout() async {
@@ -87,10 +120,15 @@ class AuthProvider with ChangeNotifier {
     try {
       final response = await _apiClient.get(ApiConstants.me);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        _isAuthenticated = data['logged_in'];
-        _username = data['username'];
-        _isAdmin = data['is_admin'] ?? false;
+        final body = jsonDecode(response.body);
+        final data = body['data'];
+        if (data != null && data['user'] != null) {
+          _isAuthenticated = data['user']['logged_in'] ?? false;
+          _username = data['user']['email'];
+          _isAdmin = data['user']['is_admin'] ?? false;
+        } else {
+          _isAuthenticated = false;
+        }
       } else {
         _isAuthenticated = false;
       }
