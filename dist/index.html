@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenith Focus — Student Performance & Burnout Prevention Dashboard</title>
+  <meta name="description" content="Maintain focus, calculate burnout levels, analyze screen time, and consult the AI coach to succeed in exams without burning out.">
+  
+  <!-- Inline SVG Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23080b11'/><circle cx='50' cy='50' r='30' fill='none' stroke='url(%23g)' stroke-width='8'/><polygon points='45,35 65,50 45,65' fill='%23ffffff'/><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%2306b6d4'/><stop offset='100%25' stop-color='%238b5cf6'/></linearGradient></defs></svg>">
+  
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Minified Production CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.min.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <i data-lucide="compass" class="brand-icon"></i>
+        </div>
+        <span class="brand-text">Zenith<span class="brand-highlight">Focus</span></span>
+      </div>
+      
+      <div class="user-profile">
+        <div class="avatar-container">
+          <div class="avatar-glow"></div>
+          <div class="avatar-inner">
+            <span class="avatar-initials">ST</span>
+          </div>
+        </div>
+        <div class="user-info">
+          <h4 class="user-name">Future Scholar</h4>
+          <span class="user-level">Focus Level 4</span>
+        </div>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="dashboard" id="btn-nav-dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-tab="pomodoro" id="btn-nav-pomodoro">
+          <i data-lucide="timer"></i>
+          <span>Pomodoro Timer</span>
+        </button>
+        <button class="nav-item" data-tab="tracker" id="btn-nav-tracker">
+          <i data-lucide="monitor-play"></i>
+          <span>Focus Lab</span>
+        </button>
+        <button class="nav-item" data-tab="ai-coach" id="btn-nav-ai-coach">
+          <i data-lucide="sparkles"></i>
+          <span>Aura Coach</span>
+        </button>
+        <button class="nav-item" data-tab="reports" id="btn-nav-reports">
+          <i data-lucide="file-bar-chart"></i>
+          <span>Daily Analytics</span>
+        </button>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="status-pill active">
+          <span class="status-dot pulsing"></span>
+          <span class="status-label">Simulating Screen Time</span>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <h1 class="page-title" id="page-title">Dashboard Overview</h1>
+          <p class="page-subtitle" id="page-subtitle">Track your focus and stay safe from mental fatigue.</p>
+        </div>
+        <div class="header-right">
+          <!-- Dynamic Notification Bar -->
+          <div class="quick-status-cards">
+            <div class="header-pill select-subject">
+              <i data-lucide="book-open"></i>
+              <select id="subject-selector" title="Select active study subject">
+                <option value="mathematics">Mathematics</option>
+                <option value="computer-science">Computer Science</option>
+                <option value="physics">Physics & Chemistry</option>
+                <option value="literature">Literature / Languages</option>
+                <option value="general" selected>General Studies</option>
+              </select>
+            </div>
+            
+            <div class="header-pill time-display">
+              <i data-lucide="clock"></i>
+              <span id="live-clock">12:00:00 PM</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Content Container -->
+      <div class="content-body">
+        
+        <!-- ================= DASHBOARD TAB ================= -->
+        <section id="tab-dashboard" class="tab-panel active">
+          <div class="dashboard-grid">
+            <!-- Score Gauge Cards -->
+            <div class="grid-card glass-card score-card" id="focus-score-widget">
+              <div class="card-header">
+                <h3>Focus Score</h3>
+                <span class="card-tooltip" title="Calculated from study duration, Pomodoro milestones, and low distraction events.">
+                  <i data-lucide="info"></i>
+                </span>
+              </div>
+              <div class="gauge-container">
+                <svg class="progress-ring" width="160" height="160">
+                  <circle class="progress-ring-bg" stroke="rgba(255, 255, 255, 0.05)" stroke-width="12" fill="transparent" r="70" cx="80" cy="80"/>
+                  <circle class="progress-ring-bar focus-gauge-bar" stroke="url(#focus-gradient)" stroke-width="12" stroke-linecap="round" fill="transparent" r="70" cx="80" cy="80"/>
+                  <defs>
+                    <linearGradient id="focus-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#06b6d4" />
+                      <stop offset="100%" stop-color="#8b5cf6" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="gauge-value">
+                  <span id="txt-focus-score">100</span>
+                  <span class="gauge-unit">/100</span>
+                </div>
+              </div>
+              <p class="gauge-status focus-excellent" id="lbl-focus-status">Excellent focus state!</p>
+            </div>
+            
+            <div class="grid-card glass-card score-card" id="burnout-score-widget">
+              <div class="card-header">
+                <h3>Burnout Index</h3>
+                <span class="card-tooltip" title="Monitors continuous activity, lack of screen breaks, and reported stress levels.">
+                  <i data-lucide="info"></i>
+                </span>
+              </div>
+              <div class="gauge-container">
+                <svg class="progress-ring" width="160" height="160">
+                  <circle class="progress-ring-bg" stroke="rgba(255, 255, 255, 0.05)" stroke-width="12" fill="transparent" r="70" cx="80" cy="80"/>
+                  <circle class="progress-ring-bar burnout-gauge-bar" stroke="url(#burnout-gradient)" stroke-width="12" stroke-linecap="round" fill="transparent" r="70" cx="80" cy="80"/>
+                  <defs>
+                    <linearGradient id="burnout-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#10b981" />
+                      <stop offset="60%" stop-color="#f59e0b" />
+                      <stop offset="100%" stop-color="#f43f5e" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div class="gauge-value">
+                  <span id="txt-burnout-score">0</span>
+                  <span class="gauge-unit">/100</span>
+                </div>
+              </div>
+              <p class="gauge-status burnout-optimal" id="lbl-burnout-status">Optimal mental balance.</p>
+            </div>
+            
+            <!-- Quick Pomodoro Widget -->
+            <div class="grid-card glass-card quick-pomo-card">
+              <div class="card-header">
+                <h3>Active Study Session</h3>
+                <span class="pomo-dot" id="pomo-phase-indicator">Study Time</span>
+              </div>
+              <div class="quick-timer-display">
+                <span class="timer-digits" id="txt-quick-timer">25:00</span>
+              </div>
+              <div class="quick-timer-controls">
+                <button class="btn btn-primary" id="btn-quick-play-pause">
+                  <i data-lucide="play" id="icon-quick-play"></i> Start
+                </button>
+                <button class="btn btn-secondary" id="btn-quick-skip" title="Skip to next phase">
+                  <i data-lucide="skip-forward"></i>
+                </button>
+              </div>
+              <div class="quick-timer-progress">
+                <div class="progress-track">
+                  <div class="progress-fill" id="quick-timer-bar" style="width: 100%;"></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Distraction and screen time widget -->
+            <div class="grid-card glass-card col-span-2 chart-card">
+              <div class="card-header">
+                <h3>Screen Time Breakdown</h3>
+                <div class="header-actions">
+                  <span class="legend-item"><span class="legend-color color-productive"></span>Productive</span>
+                  <span class="legend-item"><span class="legend-color color-distracted"></span>Distracted</span>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="dashboard-usage-chart"></canvas>
+              </div>
+            </div>
+            
+            <!-- Focus Coach Quick suggestions -->
+            <div class="grid-card glass-card coach-insights-card">
+              <div class="card-header">
+                <h3>AI Coach Aura</h3>
+                <i data-lucide="sparkles" class="card-icon text-glow-purple"></i>
+              </div>
+              <div class="coach-speech-bubble">
+                <p id="dashboard-coach-text">Evaluating your study patterns... Make sure to select your active study subject in the top right to receive personalized advice!</p>
+              </div>
+              <div class="coach-quick-action">
+                <button class="btn btn-glass btn-full" id="btn-view-ai-coach">
+                  <span>Open Full AI Advisor</span>
+                  <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= POMODORO TAB ================= -->
+        <section id="tab-pomodoro" class="tab-panel">
+          <div class="pomodoro-layout">
+            <div class="timer-main-card glass-card">
+              <!-- Timer Phase Tabs -->
+              <div class="timer-modes">
+                <button class="timer-mode-btn active" data-mode="work" id="btn-mode-work">Study Session</button>
+                <button class="timer-mode-btn" data-mode="shortBreak" id="btn-mode-short">Short Break</button>
+                <button class="timer-mode-btn" data-mode="longBreak" id="btn-mode-long">Long Break</button>
+              </div>
+              
+              <!-- Giant Visual Timer -->
+              <div class="timer-visual-wrapper">
+                <div class="timer-visual-circle">
+                  <!-- Dynamic SVG ring representing time ticks -->
+                  <svg class="timer-ring-svg" width="300" height="300">
+                    <circle class="timer-ring-bg" stroke="rgba(255, 255, 255, 0.03)" stroke-width="8" fill="transparent" r="140" cx="150" cy="150" />
+                    <circle class="timer-ring-progress" id="pomo-ring-progress" stroke="#8b5cf6" stroke-width="8" stroke-linecap="round" fill="transparent" r="140" cx="150" cy="150" />
+                  </svg>
+                  
+                  <div class="timer-content">
+                    <div class="timer-current-mode" id="txt-timer-mode-label">STUDYING</div>
+                    <div class="timer-time" id="txt-main-timer">25:00</div>
+                    <div class="timer-session-count" id="txt-timer-session">Session 1 of 4</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Controller Buttons -->
+              <div class="timer-controls">
+                <button class="control-btn btn-reset" id="btn-timer-reset" title="Reset Timer">
+                  <i data-lucide="rotate-ccw"></i>
+                </button>
+                <button class="control-btn btn-play-pause" id="btn-timer-play-pause">
+                  <i data-lucide="play" id="icon-timer-play"></i>
+                </button>
+                <button class="control-btn btn-skip" id="btn-timer-skip" title="Skip to break / study">
+                  <i data-lucide="skip-forward"></i>
+                </button>
+              </div>
+              
+              <!-- Ambient Sound & Audio Engine Options -->
+              <div class="timer-ambient-controls">
+                <div class="ambient-header">
+                  <i data-lucide="music"></i>
+                  <span>Ambient Audio Generator</span>
+                </div>
+                <div class="ambient-options">
+                  <button class="btn btn-audio active" data-sound="none" id="btn-audio-none">Mute</button>
+                  <button class="btn btn-audio" data-sound="white" id="btn-audio-white">White Noise</button>
+                  <button class="btn btn-audio" data-sound="waves" id="btn-audio-waves">Deep Rain</button>
+                  <button class="btn btn-audio" data-sound="binaural" id="btn-audio-binaural">Binaural Beats</button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="timer-settings-card glass-card">
+              <h3>Timer Configuration</h3>
+              
+              <div class="settings-form">
+                <div class="form-group">
+                  <label for="input-study-time">Study Duration (Minutes)</label>
+                  <div class="input-spinner">
+                    <input type="number" id="input-study-time" value="25" min="1" max="120" title="Study Duration">
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="input-short-break">Short Break (Minutes)</label>
+                  <div class="input-spinner">
+                    <input type="number" id="input-short-break" value="5" min="1" max="60" title="Short Break Duration">
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="input-long-break">Long Break (Minutes)</label>
+                  <div class="input-spinner">
+                    <input type="number" id="input-long-break" value="15" min="1" max="60" title="Long Break Duration">
+                  </div>
+                </div>
+                
+                <button class="btn btn-glass btn-full" id="btn-apply-timer-settings">
+                  <i data-lucide="save"></i>
+                  <span>Apply & Restart Timer</span>
+                </button>
+              </div>
+              
+              <div class="stats-mini-list">
+                <div class="mini-stat-item">
+                  <span class="mini-stat-label">Total Study Rounds Completed:</span>
+                  <span class="mini-stat-val text-cyan" id="lbl-total-rounds">0</span>
+                </div>
+                <div class="mini-stat-item">
+                  <span class="mini-stat-label">Total Focus Duration:</span>
+                  <span class="mini-stat-val text-purple" id="lbl-total-minutes">0m</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= FOCUS LAB (SCREEN TIME TRACKER) ================= -->
+        <section id="tab-tracker" class="tab-panel">
+          <div class="tracker-layout">
+            <!-- Screen Tracker Control Card -->
+            <div class="tracker-sidebar-card glass-card">
+              <h3>Focus Lab Controls</h3>
+              <p class="text-muted">A standard student oscillates between focused work and distractions. Use this simulator to experience how screen-time habits directly impact focus levels and burnout indexes.</p>
+              
+              <hr class="card-divider">
+              
+              <div class="simulator-panel">
+                <div class="form-group">
+                  <div class="flex-between">
+                    <label class="switch-label">Autopilot Study Simulator</label>
+                    <label class="switch">
+                      <input type="checkbox" id="chk-auto-simulator" checked title="Autopilot Study Simulator Toggle">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  <span class="help-text">Simulates intermittent, realistic browser behavior, including writing essays, compiling code, and occasionally looking up distracting social media apps.</span>
+                </div>
+                
+                <div class="simulator-triggers">
+                  <h4>Simulate Manual Event</h4>
+                  <div class="trigger-buttons">
+                    <button class="btn btn-action-focus btn-full" id="btn-sim-study">
+                      <i data-lucide="book-open"></i> Study Activity (+Productive)
+                    </button>
+                    <button class="btn btn-action-distract btn-full" id="btn-sim-social">
+                      <i data-lucide="smartphone"></i> Chat & Socials (+Distracted)
+                    </button>
+                    <button class="btn btn-action-game btn-full" id="btn-sim-gaming">
+                      <i data-lucide="gamepad-2"></i> Play 15m Game (+Distracted)
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <hr class="card-divider">
+              
+              <div class="distraction-log-box">
+                <h4>Dynamic Performance Log</h4>
+                <div class="log-entries" id="tracker-log-list">
+                  <div class="log-placeholder">Waiting for focus activities to log...</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Main Tracking Display -->
+            <div class="tracker-analytics-card glass-card">
+              <div class="card-header">
+                <h3>Screen Time & Distraction Breakdown</h3>
+                <span class="badge active-badge" id="lbl-active-state">ACTIVE FOCUS SENSORS RUNNING</span>
+              </div>
+              
+              <div class="metrics-strip">
+                <div class="metric-strip-item">
+                  <span class="strip-label">Productive App Time</span>
+                  <span class="strip-value text-cyan" id="lbl-productive-time">0m</span>
+                </div>
+                <div class="metric-strip-item">
+                  <span class="strip-label">Distracting App Time</span>
+                  <span class="strip-value text-rose" id="lbl-distracted-time">0m</span>
+                </div>
+                <div class="metric-strip-item">
+                  <span class="strip-label">Tab-Blur Events</span>
+                  <span class="strip-value text-amber" id="lbl-blur-count">0 times</span>
+                </div>
+              </div>
+              
+              <div class="chart-container large-chart">
+                <canvas id="tracker-detailed-chart"></canvas>
+              </div>
+              
+              <!-- Tab Visibility Info -->
+              <div class="distraction-callout">
+                <div class="callout-icon">
+                  <i data-lucide="shield-alert"></i>
+                </div>
+                <div class="callout-body">
+                  <h5>Active Tab Visibility Monitor Enabled</h5>
+                  <p>Our smart Page Visibility API detects when you change tabs, browse away, or minimize this window. Whenever you switch off, a tab distraction penalty is logged, reducing your current Focus Score. Test it by clicking another tab and returning!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= AI COACH TAB ================= -->
+        <section id="tab-ai-coach" class="tab-panel">
+          <div class="ai-coach-layout">
+            <!-- Left Info Panel -->
+            <div class="ai-info-card glass-card">
+              <div class="coach-avatar-large">
+                <div class="large-avatar-glow pulsing"></div>
+                <div class="large-avatar-inner">
+                  <i data-lucide="sparkles" class="coach-spark-icon"></i>
+                </div>
+              </div>
+              <h2>Meet Aura Focus Coach</h2>
+              <p>Aura uses advanced heuristics to monitor your Focus Score and Burnout Index in real time. It offers personalized study strategies, handles math stress, suggests breaks, and keeps you on a safe cognitive track during high-pressure exam windows.</p>
+              
+              <div class="coach-status-metrics">
+                <div class="status-metric-box">
+                  <span class="val" id="coach-metric-focus">100</span>
+                  <span class="lbl">Focus</span>
+                </div>
+                <div class="status-metric-box">
+                  <span class="val" id="coach-metric-burnout">0</span>
+                  <span class="lbl">Burnout</span>
+                </div>
+              </div>
+              
+              <div class="subject-tips-box">
+                <h4>Exam Study Strategy Tips</h4>
+                <p class="subject-tips-text" id="ai-subject-tips">Select a subject at the top header to retrieve specialized study strategies tailored to your exact academic workload.</p>
+              </div>
+            </div>
+            
+            <!-- Chat interface -->
+            <div class="ai-chat-card glass-card">
+              <div class="card-header">
+                <h3>Aura Focus Assistant</h3>
+                <button class="btn btn-action-focus btn-sm" id="btn-ai-analyze">
+                  <i data-lucide="sliders"></i> Analyze Performance
+                </button>
+              </div>
+              
+              <div class="chat-messages-container" id="chat-messages">
+                <div class="chat-message coach">
+                  <div class="msg-bubble">
+                    Hello! I'm Aura, your focus and wellness advisor. I analyze your productivity and stress metrics to keep your brain performing at 100% without burnout. Ask me anything or select a preset below!
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Presets -->
+              <div class="chat-presets">
+                <button class="preset-btn" data-query="exam-stress">Exams are stressing me out. How do I start?</button>
+                <button class="preset-btn" data-query="burnout-prevention">How do I prevent burnout today?</button>
+                <button class="preset-btn" data-query="subject-routine">Create a focus routine for my selected subject</button>
+                <button class="preset-btn" data-query="take-break">Let's do a guided breathing exercises session</button>
+              </div>
+              
+              <!-- Input form -->
+              <div class="chat-input-area">
+                <input type="text" id="input-chat-query" placeholder="Ask Aura a study coaching question..." title="Coaching Question Input">
+                <button class="btn btn-primary" id="btn-send-chat" title="Send Chat Request">
+                  <i data-lucide="send"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= REPORTS TAB ================= -->
+        <section id="tab-reports" class="tab-panel">
+          <div class="reports-layout" id="daily-report-print-area">
+            <!-- Header for printable reports -->
+            <div class="print-header">
+              <h2>Zenith Focus Study Performance Report</h2>
+              <p class="print-meta" id="print-date">Generated on: Sunday, May 24, 2026</p>
+            </div>
+            
+            <div class="report-main-grid">
+              <!-- Report Card Summary Metrics -->
+              <div class="glass-card stat-metric-card">
+                <h3>Daily Summary Indicators</h3>
+                <div class="report-metric-grid">
+                  <div class="report-metric-box">
+                    <span class="num text-cyan" id="rep-total-study">0m</span>
+                    <span class="lbl">Total Study Duration</span>
+                  </div>
+                  <div class="report-metric-box">
+                    <span class="num text-rose" id="rep-total-distraction">0m</span>
+                    <span class="lbl">Screen Distractions</span>
+                  </div>
+                  <div class="report-metric-box">
+                    <span class="num text-purple" id="rep-pomo-completed">0</span>
+                    <span class="lbl">Pomodoro Rounds</span>
+                  </div>
+                  <div class="report-metric-box">
+                    <span class="num text-amber" id="rep-distraction-count">0</span>
+                    <span class="lbl">Tab Blurs</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Final Scorecard Card -->
+              <div class="glass-card scorecard-card">
+                <h3>Performance Scorecard</h3>
+                <div class="scorecard-wrapper">
+                  <div class="scorecard-item">
+                    <span class="score-label">Final Focus Rating</span>
+                    <span class="score-number text-cyan" id="rep-focus-score">100</span>
+                    <span class="score-desc" id="rep-focus-desc">Peak Performance</span>
+                  </div>
+                  <div class="scorecard-divider"></div>
+                  <div class="scorecard-item">
+                    <span class="score-label">Burnout Warning Index</span>
+                    <span class="score-number text-emerald" id="rep-burnout-score">0</span>
+                    <span class="score-desc" id="rep-burnout-desc">Low Stress / Safe</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Charts Area in Print / Display -->
+              <div class="glass-card col-span-2 report-chart-card">
+                <h3>Daily Study & Screen Activity Timeline</h3>
+                <div class="chart-container-report">
+                  <canvas id="report-timeline-chart"></canvas>
+                </div>
+              </div>
+              
+              <!-- AI Assessment Report Card -->
+              <div class="glass-card col-span-2 report-ai-assessment-card">
+                <div class="card-header">
+                  <h3>Aura Cognitive Health Assessment</h3>
+                  <i data-lucide="sparkles" class="text-glow-purple"></i>
+                </div>
+                <div class="report-ai-content">
+                  <p id="rep-ai-content-text">Excellent mental conditioning! Your brain exhibits balanced rest and productivity phases today. Total active Pomodoro durations were structured perfectly. Keep up the high standard!</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Controls (excluded in Print) -->
+            <div class="report-controls-panel no-print">
+              <button class="btn btn-primary" id="btn-print-report">
+                <i data-lucide="printer"></i> Print Performance Report
+              </button>
+              <button class="btn btn-secondary" id="btn-reset-data">
+                <i data-lucide="trash-2"></i> Reset Application State
+              </button>
+            </div>
+          </div>
+        </section>
+        
+      </div>
+    </main>
+  </div>
+  
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toast-container"></div>
+  
+  <!-- Minified Production JavaScript Files -->
+  <script src="ai-engine.min.js"></script>
+  <script src="telemetry.min.js"></script>
+  <script src="app.min.js"></script>
+</body>
+</html>

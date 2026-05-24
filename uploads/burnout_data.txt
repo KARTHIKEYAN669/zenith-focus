@@ -1,6 +1,0 @@
-Health Metrics for AI Analysis:
-- Sleep: 5 hours
-- Work: 11 hours
-- Mood: stressed
-- Screen Time: 9 hours
-- Breaks: 1
