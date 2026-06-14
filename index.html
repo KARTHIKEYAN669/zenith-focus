@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zenith Focus - Ultimate JEE/NEET Academic Assistant & Wellness Guardian</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Toast Notification Area -->
+        <div id="toast-container" class="toast-container"></div>
+
+        <!-- AUTH SCREEN (Shown if not logged in) -->
+        <div id="auth-screen" class="auth-screen">
+            <div class="auth-card glass-card">
+                <div class="auth-header">
+                    <div class="logo-area">
+                        <i data-lucide="zap" class="logo-icon glow-pulse"></i>
+                        <h1>Zenith Focus</h1>
+                    </div>
+                    <p class="subtitle">AI-Driven Guardian & Productivity Suite</p>
+                </div>
+
+                <div class="auth-toggle-buttons">
+                    <button id="toggle-login-btn" class="active">Log In</button>
+                    <button id="toggle-signup-btn">Sign Up</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form">
+                    <div class="input-group">
+                        <label for="login-username"><i data-lucide="user"></i> Username</label>
+                        <input type="text" id="login-username" placeholder="e.g. neet_aspirant" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password"><i data-lucide="lock"></i> Password</label>
+                        <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="auth-submit-btn glow-button">
+                        Start Focus Session <i data-lucide="arrow-right"></i>
+                    </button>
+                </form>
+
+                <!-- Signup Form (Hidden initially) -->
+                <form id="signup-form" class="auth-form hidden">
+                    <div class="input-group">
+                        <label for="signup-username"><i data-lucide="user"></i> Username</label>
+                        <input type="text" id="signup-username" placeholder="e.g. jee_conqueror" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-password"><i data-lucide="lock"></i> Password</label>
+                        <input type="password" id="signup-password" placeholder="Min. 6 characters" required autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label for="signup-exam"><i data-lucide="award"></i> Target Examination</label>
+                        <select id="signup-exam" required>
+                            <option value="" disabled selected>Select your exam</option>
+                            <option value="JEE">JEE (Joint Entrance Examination)</option>
+                            <option value="NEET">NEET (National Eligibility cum Entrance)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="auth-submit-btn signup-btn glow-button">
+                        Create Guardian Account <i data-lucide="user-plus"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MAIN DASHBOARD SYSTEM (Hidden initially) -->
+        <div id="main-system" class="main-system hidden">
+            <!-- Sidebar Navigation -->
+            <aside class="sidebar glass-card">
+                <div class="sidebar-logo">
+                    <i data-lucide="zap" class="logo-icon purple-glow"></i>
+                    <span>Zenith Focus</span>
+                </div>
+                
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" data-tab="dashboard-tab">
+                        <i data-lucide="layout-dashboard"></i> <span>Dashboard</span>
+                    </button>
+                    <button class="nav-item" data-tab="focus-tab">
+                        <i data-lucide="timer"></i> <span>Focus Mode</span>
+                    </button>
+                    <button class="nav-item" data-tab="ai-tab">
+                        <i data-lucide="bot"></i> <span>AI Counselor</span>
+                    </button>
+                    <button class="nav-item" data-tab="health-tab">
+                        <i data-lucide="heart-pulse"></i> <span>Health & Reset</span>
+                    </button>
+                    <button class="nav-item" data-tab="leaderboard-tab">
+                        <i data-lucide="trophy"></i> <span>Leaderboard</span>
+                    </button>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <div class="user-badge">
+                        <div class="user-avatar" id="avatar-letters">US</div>
+                        <div class="user-info">
+                            <span class="user-name" id="user-display-name">Username</span>
+                            <span class="user-exam-tag" id="user-exam-badge">JEE</span>
+                        </div>
+                    </div>
+                    <button id="logout-btn" class="logout-btn" title="Logout">
+                        <i data-lucide="log-out"></i>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Scrollable Content Area -->
+            <main class="content-area">
+                <!-- DASHBOARD TAB -->
+                <section id="dashboard-tab" class="tab-panel active">
+                    <header class="panel-header">
+                        <h2>Welcome Back, <span id="welcome-username" class="gradient-text">Aspirant</span>!</h2>
+                        <p class="panel-subtitle">Here is your daily wellness metrics and study summary.</p>
+                    </header>
+
+                    <div class="dashboard-grid">
+                        <!-- Stat Card 1: Streak -->
+                        <div class="stat-card glass-card border-glow-orange">
+                            <div class="stat-header">
+                                <span>DAILY STUDY STREAK</span>
+                                <i data-lucide="flame" class="icon-orange animate-bounce"></i>
+                            </div>
+                            <div class="stat-value" id="dashboard-streak">0 Days</div>
+                            <div class="stat-footer">Keep studying daily to protect your streak!</div>
+                        </div>
+
+                        <!-- Stat Card 2: Hours Studied -->
+                        <div class="stat-card glass-card border-glow-purple">
+                            <div class="stat-header">
+                                <span>TOTAL STUDY TIME</span>
+                                <i data-lucide="clock" class="icon-purple"></i>
+                            </div>
+                            <div class="stat-value" id="dashboard-total-study">0 Mins</div>
+                            <div class="stat-footer">Across all registered study slots</div>
+                        </div>
+
+                        <!-- Stat Card 3: Burnout Index -->
+                        <div class="stat-card glass-card border-glow-teal" id="burnout-warning-card">
+                            <div class="stat-header">
+                                <span>BURNOUT RISK STATUS</span>
+                                <i data-lucide="shield-alert" class="icon-teal" id="burnout-risk-icon"></i>
+                            </div>
+                            <div class="stat-value" id="dashboard-burnout-risk">N/A</div>
+                            <div class="stat-footer" id="dashboard-burnout-desc">Complete your daily wellness log to predict burnout.</div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-row">
+                        <!-- Wellness Logging Card -->
+                        <div class="row-card main-log-card glass-card">
+                            <h3><i data-lucide="heart"></i> Daily Wellness & Stress Log</h3>
+                            <p class="card-desc">Our Random Forest ML model predicts student burnout before it happens. Log your details daily.</p>
+                            
+                            <form id="wellness-form" class="wellness-form">
+                                <div class="form-grid">
+                                    <div class="slider-input-group">
+                                        <div class="slider-label">
+                                            <span>Sleep Duration</span>
+                                            <span id="sleep-value" class="slider-numeric-val">7.0 Hrs</span>
+                                        </div>
+                                        <input type="range" id="wellness-sleep" min="0" max="12" step="0.1" value="7.0">
+                                        <div class="slider-endpoints"><span>0 hrs (Insomnia)</span> <span>12 hrs (Oversleep)</span></div>
+                                    </div>
+                                    
+                                    <div class="slider-input-group">
+                                        <div class="slider-label">
+                                            <span>Stress/Anxiety Level</span>
+                                            <span id="stress-value" class="slider-numeric-val">5 / 10</span>
+                                        </div>
+                                        <input type="range" id="wellness-stress" min="1" max="10" step="1" value="5">
+                                        <div class="slider-endpoints"><span class="success-text">Calm & Clear</span> <span class="danger-text">Severe Burnout</span></div>
+                                    </div>
+                                    
+                                    <div class="slider-input-group">
+                                        <div class="slider-label">
+                                            <span>Non-Study Screen Time</span>
+                                            <span id="screen-value" class="slider-numeric-val">2.5 Hrs</span>
+                                        </div>
+                                        <input type="range" id="wellness-screen" min="0" max="16" step="0.5" value="2.5">
+                                        <div class="slider-endpoints"><span>0 hrs</span> <span>16 hrs (Heavy screen stress)</span></div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="submit-checkin-btn glow-button">
+                                    Analyze Burnout Risk & Save Log <i data-lucide="activity"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Quick Action Card -->
+                        <div class="row-card side-action-card glass-card">
+                            <h3><i data-lucide="compass"></i> Quick Reminders</h3>
+                            <div class="tips-container">
+                                <div class="tip-box">
+                                    <div class="tip-title"><i data-lucide="check-circle-2" class="success-text"></i> The 20-20-20 Rule</div>
+                                    <p>Every 20 minutes, look at an object 20 feet away for 20 seconds to prevent ocular fatigue.</p>
+                                </div>
+                                <div class="tip-box">
+                                    <div class="tip-title"><i data-lucide="alert-triangle" class="warning-text"></i> Slow Down Warning</div>
+                                    <p>Data shows Organic Chemistry question accuracy increases by 40% when you spend at least 45 seconds per problem.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="analytics-row">
+                        <!-- Subject Chart -->
+                        <div class="analytics-card glass-card">
+                            <h3><i data-lucide="bar-chart-2"></i> Subject Focus Distribution (Mins)</h3>
+                            <div class="chart-container">
+                                <canvas id="subjectChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- Stress Chart -->
+                        <div class="analytics-card glass-card">
+                            <h3><i data-lucide="line-chart"></i> Burnout & Stress Historical Trends</h3>
+                            <div class="chart-container">
+                                <canvas id="wellnessChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- FOCUS MODE TAB -->
+                <section id="focus-tab" class="tab-panel">
+                    <header class="panel-header">
+                        <h2>Focus Mode</h2>
+                        <p class="panel-subtitle">Use the Pomodoro technique to study without notification distractions.</p>
+                    </header>
+
+                    <div class="focus-layout">
+                        <!-- Main Timer Column -->
+                        <div class="timer-section glass-card">
+                            <div class="timer-subject-picker">
+                                <span class="picker-label">Current Subject:</span>
+                                <div class="subject-tags-row" id="timer-subject-tags">
+                                    <!-- Populated dynamically based on JEE/NEET selection -->
+                                    <button class="subject-tag-btn active" data-subject="Physics">Physics</button>
+                                    <button class="subject-tag-btn" data-subject="Chemistry">Chemistry</button>
+                                    <button class="subject-tag-btn" data-subject="Math">Math</button>
+                                </div>
+                            </div>
+
+                            <div class="circular-timer-container">
+                                <svg class="timer-svg" viewBox="0 0 200 200">
+                                    <circle class="timer-circle-bg" cx="100" cy="100" r="85"></circle>
+                                    <circle class="timer-circle-progress" id="progress-ring" cx="100" cy="100" r="85"></circle>
+                                </svg>
+                                <div class="timer-text-overlay">
+                                    <div class="timer-status-label" id="timer-status">STUDY SESSION</div>
+                                    <div class="timer-digits" id="timer-display">25:00</div>
+                                </div>
+                            </div>
+
+                            <div class="timer-controls">
+                                <button id="timer-reset-btn" class="timer-control-btn btn-secondary" title="Reset Timer">
+                                    <i data-lucide="rotate-ccw"></i>
+                                </button>
+                                <button id="timer-play-btn" class="timer-control-btn btn-primary" title="Start Focus">
+                                    <i data-lucide="play" id="play-icon"></i>
+                                </button>
+                                <div class="custom-timer-setting">
+                                    <select id="timer-duration-select">
+                                        <option value="25" selected>25 Minutes (Standard)</option>
+                                        <option value="50">50 Minutes (Deep Work)</option>
+                                        <option value="15">15 Minutes (Quick Sprint)</option>
+                                        <option value="5">5 Minutes (Short Break)</option>
+                                        <option value="15-break">15 Minutes (Long Break)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- System Level Blockers & Sound Panel -->
+                        <div class="focus-settings-section">
+                            <!-- Distraction Shield Card -->
+                            <div class="setting-card glass-card">
+                                <h3><i data-lucide="shield-ban" class="danger-text"></i> Distraction Blocker Shield</h3>
+                                <p class="card-desc">Simulates system-level lockdown blocks for distracting applications during Pomodoro rounds.</p>
+                                
+                                <div class="app-blocker-row">
+                                    <div class="app-info">
+                                        <div class="app-name">Block Distracting Websites & Apps</div>
+                                        <div class="app-desc">Blocks YouTube, Instagram, and Reddit handles.</div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="blocker-toggle">
+                                        <span class="slider round"></span>
+                                    </label>
+                                </div>
+                                <div class="shield-status-box id-inactive" id="shield-status-box">
+                                    <i data-lucide="shield-check" class="shield-icon"></i>
+                                    <span id="shield-status-text">Shield Disabled</span>
+                                </div>
+                            </div>
+
+                            <!-- Ambient Sound Board -->
+                            <div class="setting-card glass-card">
+                                <h3><i data-lucide="music-4"></i> Study Soundscapes</h3>
+                                <p class="card-desc">Calming background frequencies to shield you from external noise.</p>
+                                
+                                <div class="soundscape-list">
+                                    <button class="sound-track-btn active" data-sound="none">
+                                        <i data-lucide="volume-x"></i> Silence
+                                    </button>
+                                    <button class="sound-track-btn" data-sound="rain">
+                                        <i data-lucide="cloud-rain"></i> Heavy Rain
+                                    </button>
+                                    <button class="sound-track-btn" data-sound="binaural">
+                                        <i data-lucide="brain-circuit"></i> Focus Waves (40Hz)
+                                    </button>
+                                    <button class="sound-track-btn" data-sound="lofi">
+                                        <i data-lucide="headset"></i> Lofi Study Beats
+                                    </button>
+                                </div>
+                                <!-- Hidden audio tags for ambient loop -->
+                                <audio id="audio-rain" loop src="https://assets.mixkit.co/active_storage/sfx/2453/2453-84.wav"></audio>
+                                <audio id="audio-binaural" loop src="https://actions.google.com/sounds/v1/science_fiction/force_field_hum.ogg"></audio>
+                                <audio id="audio-lofi" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- AI COUNSELOR & TUTOR TAB -->
+                <section id="ai-tab" class="tab-panel">
+                    <header class="panel-header">
+                        <h2>Empathy AI Tutor Hub</h2>
+                        <p class="panel-subtitle">Consult your empathetic counselor, solve doubts via OCR, and generate study resources.</p>
+                    </header>
+
+                    <div class="ai-hub-layout">
+                        <!-- Counselor Chat Window -->
+                        <div class="chat-wrapper glass-card">
+                            <div class="chat-header">
+                                <i data-lucide="messages-square" class="purple-text"></i>
+                                <div>
+                                    <h4>Zenith Wellness Counselor</h4>
+                                    <span class="chat-status"><span class="pulse-dot"></span> Active Academic Coach</span>
+                                </div>
+                            </div>
+                            
+                            <div class="chat-messages" id="chat-messages-container">
+                                <div class="message bot">
+                                    <div class="message-bubble">
+                                        Hello! I am your AI Academic Counselor. The prep season for exams can be stressful, but you are not alone. 
+                                        How are you feeling today? Are you experiencing study anxiety or having trouble with your revision schedule? Let's talk.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form id="chat-input-form" class="chat-input-area">
+                                <input type="text" id="chat-input" placeholder="Type a message or share an exam worry..." required autocomplete="off">
+                                <button type="submit" class="chat-send-btn"><i data-lucide="send"></i></button>
+                            </form>
+                        </div>
+
+                        <!-- AI Extra Resources Column -->
+                        <div class="ai-side-column">
+                            <!-- Multimodal OCR Doubt Solver -->
+                            <div class="side-card glass-card">
+                                <h3><i data-lucide="scan-face" class="teal-text"></i> Multimodal Doubt-Solver</h3>
+                                <p class="card-desc">Upload a picture of a complex physics equation, math matrix, or biology structure to get step-by-step guidance.</p>
+                                
+                                <div class="ocr-upload-zone" id="ocr-upload-zone">
+                                    <i data-lucide="image" class="upload-icon"></i>
+                                    <span class="upload-text">Click or Drag Image Here</span>
+                                    <span class="upload-subtext">JPG, PNG up to 5MB</span>
+                                    <input type="file" id="ocr-file-input" class="hidden" accept="image/*">
+                                </div>
+                                <div class="ocr-preview-container hidden" id="ocr-preview-container">
+                                    <img id="ocr-preview-image" src="" alt="OCR Preview">
+                                    <button class="remove-preview-btn" id="ocr-remove-btn"><i data-lucide="x"></i></button>
+                                </div>
+                                
+                                <button class="solve-doubt-btn glow-button hidden" id="ocr-solve-btn">
+                                    Solve Problem via Gemini <i data-lucide="sparkles"></i>
+                                </button>
+                                
+                                <div class="ocr-result-box hidden" id="ocr-result-box">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- NCERT Podcast Summarizer & Mind Maps -->
+                            <div class="side-card glass-card">
+                                <h3><i data-lucide="file-audio" class="purple-text"></i> NCERT Podcast & Concept Web</h3>
+                                <p class="card-desc">Paste textbook pages (e.g., NCERT physics, inorganic chemistry) to hear a 5-minute study summary and generate visual concepts.</p>
+                                
+                                <textarea id="ncert-text-input" class="ncert-textarea" placeholder="Paste textbook text or NCERT chapter paragraphs here..."></textarea>
+                                
+                                <div class="ncert-actions">
+                                    <button class="ncert-action-btn btn-secondary" id="ncert-podcast-btn">
+                                        <i data-lucide="play-circle"></i> Audio Podcast (TTS)
+                                    </button>
+                                    <button class="ncert-action-btn btn-primary" id="ncert-map-btn">
+                                        <i data-lucide="network"></i> Generate Mind Map
+                                    </button>
+                                </div>
+
+                                <div class="mindmap-container hidden" id="mindmap-canvas-container">
+                                    <!-- Rendered dynamically as HTML lists -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- HEALTH & RESET TAB -->
+                <section id="health-tab" class="tab-panel">
+                    <header class="panel-header">
+                        <h2>Somatic Reset & CBT Center</h2>
+                        <p class="panel-subtitle">Evidence-based nervous system reset protocols to keep your mind and heart healthy.</p>
+                    </header>
+
+                    <div class="health-layout">
+                        <!-- Left Panel: Somatic Reset Breathing -->
+                        <div class="health-card glass-card main-somatic-card">
+                            <h3><i data-lucide="wind" class="teal-text"></i> 2-Minute Somatic Reset</h3>
+                            <p class="card-desc">Scientific box breathing lowers cortisol levels instantly. Follow the breathing circle below.</p>
+                            
+                            <div class="breathing-game-container">
+                                <div class="breathing-bubble" id="breathing-bubble"></div>
+                                <div class="breathing-instruction" id="breathing-instruction">READY</div>
+                            </div>
+
+                            <div class="breathing-controls">
+                                <button class="glow-button reset-action-btn" id="breathing-toggle-btn">Start Somatic Protocol</button>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: CBT & Wearables -->
+                        <div class="health-side-column">
+                            <!-- Wearable Smartwatch Integration Simulation -->
+                            <div class="side-card glass-card">
+                                <h3><i data-lucide="watch" class="orange-text"></i> Biometric Wearable Sync</h3>
+                                <p class="card-desc">Syncs with smartwatches (Apple HealthKit / Google Fit). High resting heart rate triggers a study lockout.</p>
+                                
+                                <div class="biometric-row">
+                                    <span class="biometric-label">Simulated Heart Rate:</span>
+                                    <span class="biometric-value" id="sim-heart-rate">72 BPM</span>
+                                </div>
+                                <div class="biometric-row">
+                                    <span class="biometric-label">Resting Sleep Check (3-Day):</span>
+                                    <span class="biometric-value success-text" id="sim-sleep-check">Healthy</span>
+                                </div>
+                                
+                                <button class="biometric-trigger-btn btn-secondary" id="sim-stress-spike-btn">
+                                    Simulate HRV Stress Spike (Wearable Alert)
+                                </button>
+                            </div>
+
+                            <!-- Digital CBT Module -->
+                            <div class="side-card glass-card">
+                                <h3><i data-lucide="clipboard-signature" class="purple-text"></i> CBT Cognitive Reframing</h3>
+                                <p class="card-desc">Identify and challenge anxious thought loops regarding mock results or imposter syndrome.</p>
+                                
+                                <div class="cbt-step">
+                                    <span class="cbt-num">1</span>
+                                    <p class="cbt-prompt">What negative/fearful thought is looping in your head right now?</p>
+                                    <input type="text" id="cbt-negative" placeholder="e.g. 'I will fail JEE because I scored low in chemistry mock.'">
+                                </div>
+                                <div class="cbt-step">
+                                    <span class="cbt-num">2</span>
+                                    <p class="cbt-prompt">Reframe it based on objective facts (e.g. mock score is training data, not the final exam).</p>
+                                    <input type="text" id="cbt-reframed" placeholder="e.g. 'This score shows me where to study next. I still have time to practice.'">
+                                </div>
+                                
+                                <button class="cbt-submit-btn btn-primary" id="cbt-submit-btn">Refocus Mind</button>
+                            </div>
+
+                            <!-- Human-in-the-Loop Escalation -->
+                            <div class="side-card glass-card crisis-escalation-card">
+                                <h3><i data-lucide="phone-call" class="danger-text"></i> Institutional Help & Counselors</h3>
+                                <p class="card-desc">If you are experiencing severe depression or high stress, please connect directly with real-world institutional helplines.</p>
+                                <div class="crisis-contacts">
+                                    <div class="contact-entry">
+                                        <strong>Vandrevala Foundation Helpline:</strong>
+                                        <span>+91 9999 666 555 (24/7 Support)</span>
+                                    </div>
+                                    <div class="contact-entry">
+                                        <strong>AASRA Suicide Prevention:</strong>
+                                        <span>+91 98204 66726</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- LEADERBOARD TAB -->
+                <section id="leaderboard-tab" class="tab-panel">
+                    <header class="panel-header">
+                        <h2>JEE/NEET Mock Test Leaderboard</h2>
+                        <p class="panel-subtitle">Compare your mock test performance percentile and protect your rank with regular prep.</p>
+                    </header>
+
+                    <div class="leaderboard-layout">
+                        <!-- Submit Score Panel -->
+                        <div class="score-submission-card glass-card">
+                            <h3><i data-lucide="file-up" class="orange-text"></i> Submit Mock Test Percentile</h3>
+                            <p class="card-desc">Enter your latest national-level practice or mock test score to update your caching rank.</p>
+                            
+                            <form id="leaderboard-form" class="leaderboard-form">
+                                <div class="input-group">
+                                    <label for="mock-score-input"><i data-lucide="percent"></i> Mock Percentile / Score</label>
+                                    <input type="number" id="mock-score-input" min="0" max="100" step="0.01" placeholder="e.g. 98.45" required>
+                                </div>
+                                <button type="submit" class="submit-score-btn glow-button">
+                                    Publish Score to Leaderboard <i data-lucide="check"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Leaderboard Ranks list -->
+                        <div class="leaderboard-ranks-card glass-card">
+                            <div class="leaderboard-header-row">
+                                <h3 id="leaderboard-title">JEE Aspirant Leaderboard</h3>
+                                <span class="badge badge-cached"><i data-lucide="refresh-cw" class="spin-icon"></i> Redis Cache Simulated</span>
+                            </div>
+                            <div class="ranks-list-container">
+                                <table class="ranks-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>User</th>
+                                            <th class="text-right">Percentile Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboard-rows-container">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- System Lockout Modal Overlay -->
+        <div id="lockout-overlay" class="lockout-overlay hidden">
+            <div class="lockout-card glass-card glow-red-heavy">
+                <i data-lucide="lock-keyhole" class="lockout-icon animate-pulse danger-text"></i>
+                <h2>ZENITH LOCKOUT SHIELD ACTIVE</h2>
+                <p id="lockout-reason">Your biometric stress thresholds have been exceeded. Heart rate is dangerously high, or sleep is under 5 hours for 3 consecutive days.</p>
+                <div class="lockout-countdown">
+                    <span>Unlock in: </span><span id="lockout-timer">60s</span>
+                </div>
+                <p class="lockout-suggestion">Take a deep breath. Stand up, close your eyes, stretch. Zenith has paused all exam tools for your physical safety.</p>
+                <button class="lockout-action-btn glow-button" id="lockout-breathing-btn">Launch Somatic Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frontend Core Application Script -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
